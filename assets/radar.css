@@ -9,7 +9,28 @@
   --grey: #8a8a8a;
   --grey-dark: #4d4d4d;
   --grey-light: #c9c9c9;
-  --bg: #f7f8f9;   /* grigio di sfondo del sito QN */
+  --bg: #f7f8f9;          /* grigio di sfondo del sito QN (sovrascritto dalla pagina ospite) */
+  --tip-bg: #ffffff;
+  --on-dark: #ffffff;     /* testo sopra barre scure */
+  --on-light: #1a1a1a;    /* testo sopra barre chiare */
+  color-scheme: light;
+}
+/* Tema scuro: attivato da data-theme="dark" (vedi radar.js) */
+:root[data-theme="dark"] {
+  --ink: #f2f2f2;
+  --ink-2: #a8abae;
+  --rule: #2c2e30;
+  --blue: #4a82f2;
+  --blue-light: #8aa6ef;
+  --red: #f04850;
+  --grey: #7c8084;
+  --grey-dark: #c4c7ca;
+  --grey-light: #4a4d50;
+  --bg: #121212;
+  --tip-bg: #1e1f21;
+  --on-dark: #ffffff;
+  --on-light: #121212;
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -126,7 +147,7 @@ html, body {
   top: 0; left: 0;
   z-index: 5;
   pointer-events: none;
-  background: #fff;
+  background: var(--tip-bg);
   border: 1px solid var(--rule);
   border-radius: 2px;
   padding: 8px 10px 9px;

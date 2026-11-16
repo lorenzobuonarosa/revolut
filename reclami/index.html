@@ -103,10 +103,10 @@
         .attr("transform", function (d, i) { return "translate(0," + yOf(i) + ")"; });
       rows.append("text").attr("class", "series-label").attr("y", 13)
         .style("font-weight", function (d) { return d === hl ? 600 : 500; })
-        .style("fill", function (d) { return d.k === "Altro" ? "#6b6b6b" : null; })
+        .style("fill", function (d) { return d.k === "Altro" ? "var(--ink-2)" : null; })
         .text(function (d) { return d.k; });
       var bars = rows.append("path")
-        .attr("fill", function (d) { return d === hl ? "#d1452f" : d.k === "Altro" ? "#8a8a8a" : "#1f4fd1"; });
+        .style("fill", function (d) { return d === hl ? "var(--red)" : d.k === "Altro" ? "var(--grey)" : "var(--blue)"; });
       R.enter(bars, phase,
         function (s) { s.attr("d", function () { return R.barPathH(0, labH, 0, bh, 2); }); },
         function (s) { s.attrTween("d", function (d) { return function (t) { return R.barPathH(0, labH, x(d.v) * t, bh, 2); }; }); });
@@ -152,9 +152,9 @@
     var tip2 = R.tooltip(host2);
     var clear2 = function () {};
     R.dismissOutside(host2, function () { tip2.hide(); clear2(); });
-    var COL = ["#1f4fd1", "#9fb3ec", "#8a8a8a"];
+    var COL = ["var(--blue)", "var(--blue-light)", "var(--grey)"];
     var acc = 0;
-    var segs = main.map(function (d, i) { var s = { d: d, x0: acc, x1: acc + d.v, c: COL[i] || "#c9c9c9" }; acc += d.v; return s; });
+    var segs = main.map(function (d, i) { var s = { d: d, x0: acc, x1: acc + d.v, c: COL[i] || "var(--grey-light)" }; acc += d.v; return s; });
     var rej = segs.find(function (s) { return /respint/i.test(s.d.k); });
 
     R.responsive(host2, function (W, phase) {
@@ -171,7 +171,7 @@
       svg.append("title").text("Esito dei reclami ricevuti nel 2025, quota sul totale");
       var g = svg.append("g");
 
-      var bars = g.selectAll("path.seg").data(segs).join("path").attr("class", "seg mark").attr("fill", function (s) { return s.c; });
+      var bars = g.selectAll("path.seg").data(segs).join("path").attr("class", "seg mark").style("fill", function (s) { return s.c; });
       function geom(s, t) {
         var x0 = x(s.x0) * t, x1 = x(s.x1) * t;
         var isLast = s === segs[segs.length - 1];
@@ -186,7 +186,7 @@
       var pcts = g.selectAll("text.pin").data(segs).join("text").attr("class", "pin mark")
         .attr("x", function (s) { return x(s.x0) + 8; }).attr("y", top + bh / 2).attr("dy", "0.35em")
         .style("font-size", narrow ? "13px" : "15px").style("font-weight", 700)
-        .style("fill", function (s) { return s.c === "#9fb3ec" ? "#1a1a1a" : "#fff"; });
+        .style("fill", function (s) { return s.c === "var(--blue-light)" ? "var(--on-light)" : "var(--on-dark)"; });
       pcts.each(function (s) { R.countUp(d3.select(this), s.d.v / totEsiti * 100, function (v) { return fmt(v, 1) + "%"; }, phase); });
 
       // nomi: sopra la barra (primo a sinistra, ultimo a destra), il centrale sotto
@@ -200,7 +200,7 @@
         .text(function (s) { return s.d.k; });
       // tacche sottili che collegano il nome centrale
       g.selectAll("line.tk").data(segs.filter(function (s, i) { return i > 0 && i < segs.length - 1; })).join("line")
-        .attr("class", "tk").attr("stroke", "#1a1a1a").attr("stroke-width", 0.75)
+        .attr("class", "tk").style("stroke", "var(--ink)").attr("stroke-width", 0.75)
         .attr("x1", function (s) { return x(s.x0) + 0.5; }).attr("x2", function (s) { return x(s.x0) + 0.5; })
         .attr("y1", top + bh + 2).attr("y2", top + bh + 6);
 

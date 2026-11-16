@@ -114,7 +114,7 @@
       xa.selectAll("line").data(years).join("line")
         .attr("x1", function (d) { return Math.round(x(d)) + 0.5; })
         .attr("x2", function (d) { return Math.round(x(d)) + 0.5; })
-        .attr("y1", 0).attr("y2", 5).attr("stroke", "#1a1a1a");
+        .attr("y1", 0).attr("y2", 5).style("stroke", "var(--ink)");
       xa.selectAll("text").data(years).join("text")
         .attr("class", "tick-label").attr("x", function (d) { return x(d); }).attr("y", 20)
         .attr("text-anchor", "middle").text(d3.timeFormat("%Y"));
@@ -134,7 +134,7 @@
       // linea
       var line = d3.line().x(function (d) { return x(d.date); }).y(function (d) { return y(d.v); });
       var path = g.append("path").datum(data)
-        .attr("fill", "none").attr("stroke", "#1f4fd1").attr("stroke-width", 2.25)
+        .style("fill", "none").style("stroke", "var(--blue)").attr("stroke-width", 2.25)
         .attr("stroke-linejoin", "round").attr("stroke-linecap", "round")
         .attr("d", line);
       var L = path.node().getTotalLength();
@@ -151,8 +151,8 @@
         .attr("cx", function (d) { return x(d.date); })
         .attr("cy", function (d) { return y(d.v); })
         .attr("r", function (d) { return d === last ? 5 : 4; })
-        .style("fill", function (d) { return d.approx ? "var(--bg)" : (d === last ? "#d1452f" : "#1f4fd1"); })
-        .style("stroke", function (d) { return d.approx ? "#1f4fd1" : "var(--bg)"; })
+        .style("fill", function (d) { return d.approx ? "var(--bg)" : (d === last ? "var(--red)" : "var(--blue)"); })
+        .style("stroke", function (d) { return d.approx ? "var(--blue)" : "var(--bg)"; })
         .attr("stroke-width", function (d) { return d.approx ? 1.75 : 1.5; });
       pts.each(function (d) {
         var s = d3.select(this), delay = (x(d.date) / w) * R.DUR;

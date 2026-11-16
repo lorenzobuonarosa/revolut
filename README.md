@@ -28,7 +28,7 @@ Ogni pagina carica il proprio CSV da `../data/` con `fetch`: per aggiornare un g
 ```html
 <iframe src="https://lorenzobuonarosa.github.io/revolut/clienti/" width="100%" height="620" frameborder="0" scrolling="no" title="Clienti di Revolut in Italia"></iframe>
 <script>
-(function(){if(window.__radarQN)return;window.__radarQN=1;window.addEventListener("message",function(e){if(e.origin!=="https://lorenzobuonarosa.github.io")return;var d=e.data;if(!d||d.sentinel!=="radar-qn"||d.type!=="height")return;var f=document.getElementsByTagName("iframe");for(var i=0;i<f.length;i++){if(f[i].contentWindow===e.source){f[i].style.height=Math.ceil(d.height)+"px";}}});})();
+(function(){if(window.__radarQNv2)return;window.__radarQNv2=1;var O="https://lorenzobuonarosa.github.io";var MQ=window.matchMedia("(prefers-color-scheme:dark)");function frames(){return Array.prototype.filter.call(document.getElementsByTagName("iframe"),function(f){return(f.getAttribute("src")||"").indexOf(O+"/")===0;});}function theme(){var t=document.documentElement.getAttribute("data-theme");return t==="dark"||t==="light"?t:(MQ.matches?"dark":"light");}function bgOf(el){for(;el&&el.nodeType===1;el=el.parentElement){var c=getComputedStyle(el).backgroundColor;if(c&&c !=="transparent"&&!/rgba\([^)]*,\s*0\)$/.test(c))return c;}return null;}function send(f){try{f.contentWindow.postMessage({sentinel:"radar-qn",type:"theme",theme:theme(),bg:bgOf(f.parentElement)},O);}catch(e){}}function sendAll(){frames().forEach(send);}window.addEventListener("message",function(e){if(e.origin !==O)return;var d=e.data;if(!d||d.sentinel !=="radar-qn"||d.type !=="height")return;frames().forEach(function(f){if(f.contentWindow !==e.source)return;var h=Math.ceil(+d.height);if(h > 0&&20000 > h)f.style.height=h+"px";send(f);});});new MutationObserver(function(){sendAll();setTimeout(sendAll,400);}).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});if(MQ.addEventListener)MQ.addEventListener("change",sendAll);})();
 </script>
 ```
 
@@ -42,7 +42,7 @@ Ogni pagina carica il proprio CSV da `../data/` con `fetch`: per aggiornare un g
 ```html
 <iframe src="https://lorenzobuonarosa.github.io/revolut/conti/" width="100%" height="600" frameborder="0" scrolling="no" title="I conti di Revolut Bank"></iframe>
 <script>
-(function(){if(window.__radarQN)return;window.__radarQN=1;window.addEventListener("message",function(e){if(e.origin!=="https://lorenzobuonarosa.github.io")return;var d=e.data;if(!d||d.sentinel!=="radar-qn"||d.type!=="height")return;var f=document.getElementsByTagName("iframe");for(var i=0;i<f.length;i++){if(f[i].contentWindow===e.source){f[i].style.height=Math.ceil(d.height)+"px";}}});})();
+(function(){if(window.__radarQNv2)return;window.__radarQNv2=1;var O="https://lorenzobuonarosa.github.io";var MQ=window.matchMedia("(prefers-color-scheme:dark)");function frames(){return Array.prototype.filter.call(document.getElementsByTagName("iframe"),function(f){return(f.getAttribute("src")||"").indexOf(O+"/")===0;});}function theme(){var t=document.documentElement.getAttribute("data-theme");return t==="dark"||t==="light"?t:(MQ.matches?"dark":"light");}function bgOf(el){for(;el&&el.nodeType===1;el=el.parentElement){var c=getComputedStyle(el).backgroundColor;if(c&&c !=="transparent"&&!/rgba\([^)]*,\s*0\)$/.test(c))return c;}return null;}function send(f){try{f.contentWindow.postMessage({sentinel:"radar-qn",type:"theme",theme:theme(),bg:bgOf(f.parentElement)},O);}catch(e){}}function sendAll(){frames().forEach(send);}window.addEventListener("message",function(e){if(e.origin !==O)return;var d=e.data;if(!d||d.sentinel !=="radar-qn"||d.type !=="height")return;frames().forEach(function(f){if(f.contentWindow !==e.source)return;var h=Math.ceil(+d.height);if(h > 0&&20000 > h)f.style.height=h+"px";send(f);});});new MutationObserver(function(){sendAll();setTimeout(sendAll,400);}).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});if(MQ.addEventListener)MQ.addEventListener("change",sendAll);})();
 </script>
 ```
 
@@ -56,7 +56,7 @@ Ogni pagina carica il proprio CSV da `../data/` con `fetch`: per aggiornare un g
 ```html
 <iframe src="https://lorenzobuonarosa.github.io/revolut/segnalazioni/" width="100%" height="840" frameborder="0" scrolling="no" title="Segnalazioni di operazioni sospette alla UIF"></iframe>
 <script>
-(function(){if(window.__radarQN)return;window.__radarQN=1;window.addEventListener("message",function(e){if(e.origin!=="https://lorenzobuonarosa.github.io")return;var d=e.data;if(!d||d.sentinel!=="radar-qn"||d.type!=="height")return;var f=document.getElementsByTagName("iframe");for(var i=0;i<f.length;i++){if(f[i].contentWindow===e.source){f[i].style.height=Math.ceil(d.height)+"px";}}});})();
+(function(){if(window.__radarQNv2)return;window.__radarQNv2=1;var O="https://lorenzobuonarosa.github.io";var MQ=window.matchMedia("(prefers-color-scheme:dark)");function frames(){return Array.prototype.filter.call(document.getElementsByTagName("iframe"),function(f){return(f.getAttribute("src")||"").indexOf(O+"/")===0;});}function theme(){var t=document.documentElement.getAttribute("data-theme");return t==="dark"||t==="light"?t:(MQ.matches?"dark":"light");}function bgOf(el){for(;el&&el.nodeType===1;el=el.parentElement){var c=getComputedStyle(el).backgroundColor;if(c&&c !=="transparent"&&!/rgba\([^)]*,\s*0\)$/.test(c))return c;}return null;}function send(f){try{f.contentWindow.postMessage({sentinel:"radar-qn",type:"theme",theme:theme(),bg:bgOf(f.parentElement)},O);}catch(e){}}function sendAll(){frames().forEach(send);}window.addEventListener("message",function(e){if(e.origin !==O)return;var d=e.data;if(!d||d.sentinel !=="radar-qn"||d.type !=="height")return;frames().forEach(function(f){if(f.contentWindow !==e.source)return;var h=Math.ceil(+d.height);if(h > 0&&20000 > h)f.style.height=h+"px";send(f);});});new MutationObserver(function(){sendAll();setTimeout(sendAll,400);}).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});if(MQ.addEventListener)MQ.addEventListener("change",sendAll);})();
 </script>
 ```
 
@@ -70,7 +70,7 @@ Ogni pagina carica il proprio CSV da `../data/` con `fetch`: per aggiornare un g
 ```html
 <iframe src="https://lorenzobuonarosa.github.io/revolut/reclami/" width="100%" height="820" frameborder="0" scrolling="no" title="I reclami ricevuti da Revolut Italia"></iframe>
 <script>
-(function(){if(window.__radarQN)return;window.__radarQN=1;window.addEventListener("message",function(e){if(e.origin!=="https://lorenzobuonarosa.github.io")return;var d=e.data;if(!d||d.sentinel!=="radar-qn"||d.type!=="height")return;var f=document.getElementsByTagName("iframe");for(var i=0;i<f.length;i++){if(f[i].contentWindow===e.source){f[i].style.height=Math.ceil(d.height)+"px";}}});})();
+(function(){if(window.__radarQNv2)return;window.__radarQNv2=1;var O="https://lorenzobuonarosa.github.io";var MQ=window.matchMedia("(prefers-color-scheme:dark)");function frames(){return Array.prototype.filter.call(document.getElementsByTagName("iframe"),function(f){return(f.getAttribute("src")||"").indexOf(O+"/")===0;});}function theme(){var t=document.documentElement.getAttribute("data-theme");return t==="dark"||t==="light"?t:(MQ.matches?"dark":"light");}function bgOf(el){for(;el&&el.nodeType===1;el=el.parentElement){var c=getComputedStyle(el).backgroundColor;if(c&&c !=="transparent"&&!/rgba\([^)]*,\s*0\)$/.test(c))return c;}return null;}function send(f){try{f.contentWindow.postMessage({sentinel:"radar-qn",type:"theme",theme:theme(),bg:bgOf(f.parentElement)},O);}catch(e){}}function sendAll(){frames().forEach(send);}window.addEventListener("message",function(e){if(e.origin !==O)return;var d=e.data;if(!d||d.sentinel !=="radar-qn"||d.type !=="height")return;frames().forEach(function(f){if(f.contentWindow !==e.source)return;var h=Math.ceil(+d.height);if(h > 0&&20000 > h)f.style.height=h+"px";send(f);});});new MutationObserver(function(){sendAll();setTimeout(sendAll,400);}).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});if(MQ.addEventListener)MQ.addEventListener("change",sendAll);})();
 </script>
 ```
 
@@ -84,19 +84,25 @@ Ogni pagina carica il proprio CSV da `../data/` con `fetch`: per aggiornare un g
 ```html
 <iframe src="https://lorenzobuonarosa.github.io/revolut/timeline/" width="100%" height="520" frameborder="0" scrolling="no" title="Timeline di Revolut in Italia"></iframe>
 <script>
-(function(){if(window.__radarQN)return;window.__radarQN=1;window.addEventListener("message",function(e){if(e.origin!=="https://lorenzobuonarosa.github.io")return;var d=e.data;if(!d||d.sentinel!=="radar-qn"||d.type!=="height")return;var f=document.getElementsByTagName("iframe");for(var i=0;i<f.length;i++){if(f[i].contentWindow===e.source){f[i].style.height=Math.ceil(d.height)+"px";}}});})();
+(function(){if(window.__radarQNv2)return;window.__radarQNv2=1;var O="https://lorenzobuonarosa.github.io";var MQ=window.matchMedia("(prefers-color-scheme:dark)");function frames(){return Array.prototype.filter.call(document.getElementsByTagName("iframe"),function(f){return(f.getAttribute("src")||"").indexOf(O+"/")===0;});}function theme(){var t=document.documentElement.getAttribute("data-theme");return t==="dark"||t==="light"?t:(MQ.matches?"dark":"light");}function bgOf(el){for(;el&&el.nodeType===1;el=el.parentElement){var c=getComputedStyle(el).backgroundColor;if(c&&c !=="transparent"&&!/rgba\([^)]*,\s*0\)$/.test(c))return c;}return null;}function send(f){try{f.contentWindow.postMessage({sentinel:"radar-qn",type:"theme",theme:theme(),bg:bgOf(f.parentElement)},O);}catch(e){}}function sendAll(){frames().forEach(send);}window.addEventListener("message",function(e){if(e.origin !==O)return;var d=e.data;if(!d||d.sentinel !=="radar-qn"||d.type !=="height")return;frames().forEach(function(f){if(f.contentWindow !==e.source)return;var h=Math.ceil(+d.height);if(h > 0&&20000 > h)f.style.height=h+"px";send(f);});});new MutationObserver(function(){sendAll();setTimeout(sendAll,400);}).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});if(MQ.addEventListener)MQ.addEventListener("change",sendAll);})();
 </script>
 ```
 
-## Altezza automatica degli iframe
+## Altezza automatica e tema degli iframe
 
-Ogni pagina, al caricamento e a ogni ridimensionamento, invia al CMS:
+Ogni pagina, al caricamento e quando cambia dimensione, invia al CMS l'altezza del proprio contenuto:
 
 ```js
 parent.postMessage({ sentinel: 'radar-qn', type: 'height', height: <altezza del contenuto> }, '*');
 ```
 
-Lo script incluso negli snippet ascolta il messaggio, accetta solo l'origine `https://lorenzobuonarosa.github.io` e aggiorna l'altezza dell'iframe che lo ha inviato. Si può incollare una volta per pagina: se è presente più volte non registra due ascoltatori.
+Lo script incluso negli snippet (versione leggibile in `assets/embed.js`):
+
+- accetta solo messaggi da `https://lorenzobuonarosa.github.io` e aggiorna l'altezza dell'iframe che li ha inviati (con un tetto di sicurezza a 20.000 px);
+- legge il tema del sito QN dall'attributo `data-theme` del tag `<html>` (se manca, dal tema del sistema) e il colore di sfondo del contenitore dell'iframe, e li manda a ogni dataviz con `{sentinel:'radar-qn', type:'theme', theme, bg}`;
+- se il lettore cambia tema dal menu del sito, aggiorna subito tutte le dataviz.
+
+Senza lo script le dataviz seguono il tema del sistema. Per forzarlo si può aggiungere `?theme=light` o `?theme=dark` all'URL dell'iframe.
 
 ## Note sui dati
 

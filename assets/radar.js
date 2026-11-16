@@ -2,6 +2,33 @@
 (function () {
   "use strict";
 
+  // ---------- Tema (chiaro/scuro) e sfondo ----------
+  // Ordine: ?theme= nell'URL > messaggio della pagina ospite > prefers-color-scheme.
+  // La pagina ospite (script nel CMS) invia {sentinel:'radar-qn', type:'theme', theme, bg}.
+  var root = document.documentElement;
+  var qs = new URLSearchParams(location.search);
+  var urlTheme = /^(light|dark)$/.test(qs.get("theme") || "") ? qs.get("theme") : null;
+  var msgTheme = null;
+  var darkMQ = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+  var SAFE_COLOR = /^(#[0-9a-f]{3,8}|rgba?\(\s*[\d.]+%?\s*,\s*[\d.]+%?\s*,\s*[\d.]+%?\s*(,\s*[\d.]+\s*)?\))$/i;
+  function applyTheme() {
+    var t = urlTheme || msgTheme || (darkMQ && darkMQ.matches ? "dark" : "light");
+    if (root.getAttribute("data-theme") !== t) root.setAttribute("data-theme", t);
+  }
+  function applyBg(bg) {
+    if (bg && SAFE_COLOR.test(String(bg).trim())) root.style.setProperty("--bg", String(bg).trim());
+    else root.style.removeProperty("--bg");
+  }
+  applyTheme();
+  if (darkMQ && darkMQ.addEventListener) darkMQ.addEventListener("change", applyTheme);
+  window.addEventListener("message", function (e) {
+    var d = e.data;
+    if (!d || typeof d !== "object" || d.sentinel !== "radar-qn" || d.type !== "theme") return;
+    msgTheme = d.theme === "dark" || d.theme === "light" ? d.theme : null;
+    applyTheme();
+    applyBg(d.bg);
+  });
+
   // ---------- Formati numerici italiani ----------
   var locale = d3.formatLocale({
     decimal: ",",

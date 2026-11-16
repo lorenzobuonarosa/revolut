@@ -42,7 +42,7 @@
 <script>
 (function () {
   var R = Radar, fmt = R.fmt;
-  var C = { banche: "#1f4fd1", altri: "#8a8a8a", unico: "#4d4d4d", red: "#d1452f" };
+  var C = { banche: "var(--blue)", altri: "var(--grey)", unico: "var(--grey-dark)", red: "var(--red)" };
 
   Promise.all([R.loadCSV("../data/sos-annuali.csv"), R.loadCSV("../data/sos-semestrali.csv")]).then(function (res) {
     var anni = res[0].map(function (r) {
@@ -122,7 +122,7 @@
           : R.barPathV(x(s.d.k), yb, x.bandwidth(), bot - yb, 2);
       }
       var bars = g.append("g").selectAll("path").data(segs).join("path").attr("class", "mark")
-        .attr("fill", function (s) { return C[s.t]; });
+        .style("fill", function (s) { return C[s.t]; });
       R.enter(bars, phase,
         function (s) { s.attr("d", function (q) { return q.t === "altri" ? segPath(q, 0) : segPath(q, 0); }); },
         function (s) {
@@ -153,7 +153,7 @@
         dl.append("text").attr("class", "series-label").attr("x", lx).attr("y", y(lastY.banche / 2)).attr("dy", "0.35em")
           .text("Banche e Poste");
         dl.append("text").attr("class", "series-label").attr("x", lx).attr("y", y(lastY.banche + lastY.altri / 2)).attr("dy", "0.35em")
-          .style("fill", "#6b6b6b").text("Altri segnalanti");
+          .style("fill", "var(--ink-2)").text("Altri segnalanti");
         R.enter(dl, phase, function (s) { s.style("opacity", 0); }, function (s) { s.style("opacity", 1); }, R.DUR * 0.8);
       }
 
@@ -163,7 +163,7 @@
       var a0 = x(noSplit[0].k), a1 = x(noSplit[noSplit.length - 1].k) + x.bandwidth();
       var bt = d3.min([y(d3.max(noSplit, function (d) { return d.tot; })) - (narrow ? 12 : 26)]);
       an.append("path").attr("d", "M" + a0 + "," + (bt + 5) + "V" + bt + "H" + a1 + "V" + (bt + 5));
-      an.append("text").attr("x", a0).attr("y", bt - 8).style("fill", "#6b6b6b")
+      an.append("text").attr("x", a0).attr("y", bt - 8).style("fill", "var(--ink-2)")
         .text("Fino al " + noSplit[noSplit.length - 1].k + ": dettaglio non disponibile")
         .call(R.wrap, narrow ? Math.max(a1 - a0, 110) : a1 - a0 + 60);
       an.selectAll("text").each(function () {
@@ -230,13 +230,13 @@
       var yy = function (i) { return i * row + (row - bh) / 2; };
       g.append("g").selectAll("text").data(sem).join("text").attr("class", "tick-label")
         .attr("x", -labW).attr("y", function (d, i) { return yy(i) + bh / 2; }).attr("dy", "0.35em")
-        .style("fill", function (d) { return d === rec ? "#1a1a1a" : null; })
+        .style("fill", function (d) { return d === rec ? "var(--ink)" : null; })
         .style("font-weight", function (d) { return d === rec ? 600 : null; })
         .text(function (d) { return d.k; });
       g.append("line").attr("class", "baseline").attr("x1", 0.5).attr("x2", 0.5).attr("y1", 0).attr("y2", row * sem.length);
 
       var bars = g.append("g").selectAll("path").data(sem).join("path").attr("class", "mark")
-        .attr("fill", function (d) { return d === rec ? C.red : C.altri; });
+        .style("fill", function (d) { return d === rec ? C.red : C.altri; });
       R.enter(bars, phase,
         function (s) { s.attr("d", function (d, i) { return R.barPathH(1, yy(i), 0, bh, 2); }); },
         function (s) { s.attrTween("d", function (d) { var i = sem.indexOf(d); return function (t) { return R.barPathH(1, yy(i), x(d.tot) * t, bh, 2); }; }); });

@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>/* tema prima del primo disegno, per evitare lampi di colore */(function(){var q=new URLSearchParams(location.search).get('theme');document.documentElement.setAttribute('data-theme',(q==='light'||q==='dark')?q:(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))})();</script>
 <title>Revolut, dalla licenza lituana all'amministrazione giudiziaria</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -12,6 +13,14 @@
     --rev:#1f4fd1;       /* Revolut: crescita e licenze */
     --sanz:#d1452f;      /* sanzioni e indagini */
     --mil:#8a8a8a;       /* precedenti tribunale di Milano */
+    --chip-bg:#ffffff; --body:#333333;
+    color-scheme:light;
+  }
+  :root[data-theme="dark"]{
+    --ink:#f2f2f2; --muted:#a8abae; --line:#2c2e30; --bg:#121212;
+    --rev:#4a82f2; --sanz:#f04850; --mil:#7c8084;
+    --chip-bg:#1e1f21; --body:#d6d8da;
+    color-scheme:dark;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.45}
@@ -19,9 +28,9 @@
   h1{font-size:22px;line-height:1.2;margin:0 0 6px;font-weight:700}
   .sub{color:var(--muted);margin:0 0 16px;font-size:14px}
   .filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
-  .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font:500 13px Inter,sans-serif;cursor:pointer;display:flex;align-items:center;gap:7px;color:var(--ink)}
+  .chip{border:1px solid var(--line);background:var(--chip-bg);border-radius:999px;padding:6px 12px;font:500 13px Inter,sans-serif;cursor:pointer;display:flex;align-items:center;gap:7px;color:var(--ink)}
   .chip .dot{width:9px;height:9px;border-radius:50%}
-  .chip[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
   .tl{position:relative;margin:0;padding:0;list-style:none}
   .tl:before{content:"";position:absolute;left:92px;top:4px;bottom:4px;width:2px;background:var(--line)}
   .ev{position:relative;display:grid;grid-template-columns:80px 1fr;gap:26px;padding:0 0 16px}
@@ -35,7 +44,7 @@
   .card .tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;color:var(--c);margin-bottom:2px}
   .card .t:after{content:" +";color:var(--muted);font-weight:400}
   .card.open .t:after{content:" −"}
-  .card .body{display:none;font-size:14px;color:#333;margin-top:6px}
+  .card .body{display:none;font-size:14px;color:var(--body);margin-top:6px}
   .card.open .body{display:block}
   .card .src{font-size:12px;color:var(--muted);margin-top:6px}
   .card .src a{color:var(--muted)}
@@ -153,9 +162,23 @@ document.querySelectorAll('.chip').forEach(ch=>ch.addEventListener('click',()=>{
   document.querySelectorAll('.ev').forEach(li=>li.hidden=!(f==='all'||li.dataset.c===f));
   postHeight();
 }));
-// altezza per l'iframe responsive nel CMS
-function postHeight(){try{parent.postMessage({sentinel:'radar-qn',type:'height',height:document.documentElement.scrollHeight},'*')}catch(e){}}
+// altezza per l'iframe responsive nel CMS: si misura il contenuto (.wrap), non la finestra,
+// altrimenti l'altezza non può mai scendere e iframe e pagina si rincorrono all'infinito
+var lastH=0;
+function postHeight(){try{var h=Math.ceil(document.querySelector('.wrap').getBoundingClientRect().height);if(h!==lastH){lastH=h;parent.postMessage({sentinel:'radar-qn',type:'height',height:h},'*')}}catch(e){}}
 window.addEventListener('load',postHeight); window.addEventListener('resize',postHeight);
+if(window.ResizeObserver) new ResizeObserver(postHeight).observe(document.querySelector('.wrap'));
+// tema: ?theme= nell'URL > messaggio della pagina ospite > prefers-color-scheme
+(function(){
+  var root=document.documentElement, q=new URLSearchParams(location.search).get('theme');
+  var urlT=(q==='light'||q==='dark')?q:null, msgT=null, mq=matchMedia('(prefers-color-scheme: dark)');
+  var SAFE=/^(#[0-9a-f]{3,8}|rgba?\(\s*[\d.]+%?\s*,\s*[\d.]+%?\s*,\s*[\d.]+%?\s*(,\s*[\d.]+\s*)?\))$/i;
+  function apply(){root.setAttribute('data-theme',urlT||msgT||(mq.matches?'dark':'light'))}
+  apply(); mq.addEventListener('change',apply);
+  addEventListener('message',function(e){var d=e.data;if(!d||typeof d!=='object'||d.sentinel!=='radar-qn'||d.type!=='theme')return;
+    msgT=(d.theme==='dark'||d.theme==='light')?d.theme:null; apply();
+    if(d.bg&&SAFE.test(String(d.bg).trim()))root.style.setProperty('--bg',String(d.bg).trim()); else root.style.removeProperty('--bg');});
+})();
 </script>
 </body>
 </html>
