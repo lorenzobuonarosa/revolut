@@ -78,8 +78,8 @@ Ogni pagina carica il proprio CSV da `../data/` con `fetch`: per aggiornare un g
 
 - URL: https://lorenzobuonarosa.github.io/revolut/timeline/
 - Dati: —
-- Fonte: Revolut
-- Timeline interattiva (file fornito dalla redazione).
+- Fonte: Banca di Lituania, Bce, Agcm, Tribunale di Milano (via Ansa, Reuters), comunicati Revolut, Il Post, Il Sole 24 Ore, Sistema Penale
+- Timeline interattiva "Revolut, dalla licenza lituana all'amministrazione giudiziaria" (file fornito dalla redazione, copiato senza modifiche): 20 eventi filtrabili per categoria.
 
 ```html
 <iframe src="https://lorenzobuonarosa.github.io/revolut/timeline/" width="100%" height="520" frameborder="0" scrolling="no" title="Timeline di Revolut in Italia"></iframe>

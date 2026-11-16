@@ -1,22 +1,161 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Timeline Revolut – Radar QN</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="../assets/radar.css">
-<!-- SEGNAPOSTO: sostituire questo file con timeline-revolut.html, copiato così com'è -->
+<title>Revolut, dalla licenza lituana all'amministrazione giudiziaria</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1a1a1a; --muted:#6b6b6b; --line:#e3e3e3; --bg:#ffffff;
+    --rev:#1f4fd1;       /* Revolut: crescita e licenze */
+    --sanz:#d1452f;      /* sanzioni e indagini */
+    --mil:#8a8a8a;       /* precedenti tribunale di Milano */
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.45}
+  .wrap{max-width:760px;margin:0 auto;padding:20px 16px 28px}
+  h1{font-size:22px;line-height:1.2;margin:0 0 6px;font-weight:700}
+  .sub{color:var(--muted);margin:0 0 16px;font-size:14px}
+  .filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font:500 13px Inter,sans-serif;cursor:pointer;display:flex;align-items:center;gap:7px;color:var(--ink)}
+  .chip .dot{width:9px;height:9px;border-radius:50%}
+  .chip[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .tl{position:relative;margin:0;padding:0;list-style:none}
+  .tl:before{content:"";position:absolute;left:92px;top:4px;bottom:4px;width:2px;background:var(--line)}
+  .ev{position:relative;display:grid;grid-template-columns:80px 1fr;gap:26px;padding:0 0 16px}
+  .ev[hidden]{display:none}
+  .date{text-align:right;font-size:12.5px;color:var(--muted);font-weight:600;padding-top:2px;font-variant-numeric:tabular-nums}
+  .ev:before{content:"";position:absolute;left:87px;top:5px;width:12px;height:12px;border-radius:50%;background:var(--c);box-shadow:0 0 0 3px #fff}
+  .ev.key:before{width:16px;height:16px;left:85px;top:3px}
+  .card{border-left:3px solid transparent}
+  .card button{all:unset;cursor:pointer;display:block;width:100%}
+  .card .t{font-weight:600;font-size:15px}
+  .card .tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;color:var(--c);margin-bottom:2px}
+  .card .t:after{content:" +";color:var(--muted);font-weight:400}
+  .card.open .t:after{content:" −"}
+  .card .body{display:none;font-size:14px;color:#333;margin-top:6px}
+  .card.open .body{display:block}
+  .card .src{font-size:12px;color:var(--muted);margin-top:6px}
+  .card .src a{color:var(--muted)}
+  .ev.key .t{font-size:16.5px}
+  .foot{border-top:1px solid var(--line);margin-top:8px;padding-top:10px;font-size:12px;color:var(--muted)}
+  @media (max-width:520px){
+    .tl:before{left:70px}
+    .ev{grid-template-columns:58px 1fr;gap:24px}
+    .ev:before{left:65px}.ev.key:before{left:63px}
+    .date{font-size:11.5px}
+  }
+</style>
 </head>
 <body>
-<main class="radar">
-  <h1 class="r-title">Revolut in Italia, le tappe</h1>
-  <p class="r-sub">Timeline in preparazione</p>
-  <footer class="r-foot"><span>Fonte: Revolut</span><span>Elaborazione Radar – QN</span></footer>
-</main>
+<div class="wrap">
+  <h1>Revolut, dalla licenza lituana all'amministrazione giudiziaria</h1>
+  <p class="sub">Le tappe di Revolut in Italia e in Europa, le sanzioni ricevute e i precedenti del Tribunale di Milano. Tocca un evento per i dettagli.</p>
+
+  <div class="filters" role="group" aria-label="Filtra gli eventi">
+    <button class="chip" data-f="all" aria-pressed="true">Tutti</button>
+    <button class="chip" data-f="rev" aria-pressed="false"><span class="dot" style="background:var(--rev)"></span>Crescita e licenze</button>
+    <button class="chip" data-f="sanz" aria-pressed="false"><span class="dot" style="background:var(--sanz)"></span>Sanzioni e indagini</button>
+    <button class="chip" data-f="mil" aria-pressed="false"><span class="dot" style="background:var(--mil)"></span>Precedenti a Milano</button>
+  </div>
+
+  <ol class="tl" id="tl"></ol>
+
+  <p class="foot">Fonti: Banca di Lituania, Bce, Agcm, Tribunale di Milano (via Ansa, Reuters), comunicati Revolut, Il Post, Il Sole 24 Ore, Sistema Penale. Elaborazione Radar – QN.</p>
+</div>
+
 <script>
-function h(){parent.postMessage({sentinel:'radar-qn',type:'height',height:document.querySelector('.radar').getBoundingClientRect().height},'*')}
-addEventListener('load',h);addEventListener('resize',h);
+const EVENTS = [
+  {d:"2019-05-06", l:"mag 2019", c:"mil", t:"Ceva Logistics Italia",
+   b:"Prima amministrazione giudiziaria del Tribunale di Milano (sezione misure di prevenzione) per caporalato nella filiera della logistica. Revocata a febbraio 2020, con tre mesi di anticipo.",
+   s:"Ceva Logistics, comunicato del 3 marzo 2020", u:"https://www.cevalogistics.com/en/news-and-media/newsroom/press-release/ceva-logistics-italia-esce-dalla-procedura-di-amministrazione-giudiziaria-con-tre-mesi-di-anticipo"},
+  {d:"2020-05-28", l:"mag 2020", c:"mil", t:"Uber Italy",
+   b:"Il tribunale applica l'articolo 34 del Codice antimafia al «caporalato digitale» dei rider di Uber Eats.",
+   s:"Sistema Penale", u:"https://www.sistemapenale.it/it/scheda/uber-sfruttamento-rider-amministrazione-giudiziaria-caporalato-digitale"},
+  {d:"2021-12-16", l:"dic 2021", c:"rev", t:"Revolut Bank UAB diventa banca a tutti gli effetti",
+   b:"Su proposta della Banca di Lituania, la Bce trasforma la licenza bancaria specializzata in licenza bancaria piena. Vilnius diventa l'hub europeo del gruppo dopo la Brexit.",
+   s:"Banca di Lituania", u:"https://www.lb.lt/en/news/banking-licence-granted-to-revolut-bank-uab"},
+  {d:"2022-11-23", l:"nov 2022", c:"rev", t:"Un milione di clienti in Italia",
+   b:"Cinque anni dopo il lancio dell'app nel mercato italiano, avvenuto a settembre 2017.",
+   s:"Money.it", u:"https://www.money.it/revolut-supera-1-milione-di-clienti-in-italia-grazie-alla-super-app-finanziaria"},
+  {d:"2024-01-15", l:"gen 2024", c:"mil", t:"Alviero Martini",
+   b:"Si apre la stagione dei provvedimenti sulla moda: omesso controllo sullo sfruttamento del lavoro nei laboratori dei fornitori. Misura revocata in anticipo a ottobre 2024.",
+   s:"Il Fatto Quotidiano", u:"https://www.ilfattoquotidiano.it/2024/10/24/revocata-in-anticipo-lamministrazione-giudiziaria-per-la-alviero-martini-ha-saputo-reagire-nel-modo-corretto-ora-fatturato-in-crescita/7742579/"},
+  {d:"2024-04-03", l:"apr 2024", c:"mil", t:"Giorgio Armani Operations",
+   b:"Borse e accessori appaltati a ditte che subappaltavano a opifici cinesi nell'hinterland milanese. Misura poi revocata.",
+   s:"La Conceria", u:"https://www.laconceria.it/en/news/illegal-recruitment-armanis-judicial-administration-revoked-gao/"},
+  {d:"2024-06-10", l:"giu 2024", c:"mil", t:"Manufactures Dior",
+   b:"Stesso schema della filiera di Armani. Revoca a febbraio 2025, dopo l'assunzione di 17 controllori di filiera.",
+   s:"LaPresse", u:"https://www.lapresse.it/cronaca/2025/05/15/valentino-bags-commissariata-caporalato/"},
+  {d:"2024-11-18", l:"nov 2024", c:"rev", t:"Apre la succursale italiana, arrivano gli Iban IT",
+   b:"Revolut Bank UAB opera in Italia tramite una succursale vigilata da Banca d'Italia e Bce. I depositi restano garantiti fino a 100mila euro dal fondo lituano.",
+   s:"Quotidiano Nazionale", u:"https://www.quotidiano.net/economia/revolut-ff2bb8ca"},
+  {d:"2025-04-08", l:"apr 2025", c:"sanz", t:"Multa da 3,5 milioni in Lituania",
+   b:"La Banca di Lituania sanziona Revolut Bank per carenze nel monitoraggio di rapporti e transazioni: la banca «non sempre» identificava le operazioni sospette. Nessun caso di riciclaggio accertato.",
+   s:"Finextra", u:"https://www.finextra.com/newsarticle/45802/revolut-fined-35-million-by-lithuanian-central-bank-for-aml-failings"},
+  {d:"2025-05-15", l:"mag 2025", c:"mil", t:"Valentino Bags Lab",
+   b:"Quarta azienda della moda finita sotto il controllo del tribunale per omesso controllo della filiera.",
+   s:"L'Espresso", u:"https://lespresso.it/c/attualita/2025/5/15/valentino-bags-amministrazione-giudiziaria-caporalato-lavoratori-cinesi-sfruttati-sorvegliati/54338"},
+  {d:"2025-07-01", l:"lug 2025", c:"sanz", t:"Antitrust apre l'istruttoria, ispezione con la GdF",
+   b:"L'Agcm avvia il procedimento PS12974 su investimenti «a zero commissioni», blocchi dei conti e migrazione all'Iban italiano. L'8 luglio ispezione nella sede milanese.",
+   s:"Agcm", u:"https://en.agcm.it/en/media/press-releases/2025/7/PS12974"},
+  {d:"2025-07-10", l:"lug 2025", c:"sanz", t:"La Bce frena i nuovi prodotti (notizia emersa nel 2026)",
+   b:"La Bce limita la possibilità di lanciare nuovi prodotti nello Spazio economico europeo finché non saranno corrette carenze nel processo di approvazione. Il Financial Times lo rivela il 10 giugno 2026.",
+   s:"Opus Datum / Financial Times", u:"https://www.opusdatum.com/post/self-guided-missiles-what-the-ecb-saw-in-revolut-s-growth"},
+  {d:"2025-07-14", l:"lug 2025", c:"mil", t:"Loro Piana",
+   b:"Un anno di amministrazione giudiziaria per il marchio del gruppo Lvmh, chiesto dal pm Paolo Storari.",
+   s:"Reuters via Yahoo Finance", u:"https://it.finance.yahoo.com/notizie/loro-piana-amministrazione-giudiziaria-per-100255796.html"},
+  {d:"2025-09-11", l:"set 2025", c:"rev", t:"Quattro milioni di clienti in Italia",
+   b:"Revolut diventa la banca estera con più clienti nel Paese.",
+   s:"Finanza Digitale", u:"https://www.finanzadigitale.com/news/revolut-italia-quattro-milioni-clienti/"},
+  {d:"2026-02-09", l:"feb 2026", c:"mil", t:"Glovo-Foodinho e poi Deliveroo",
+   b:"Controllo giudiziario d'urgenza per le società del food delivery, accusate di «caporalato algoritmico» sui rider. Stesso pm, Paolo Storari.",
+   s:"PMI.it", u:"https://www.pmi.it/economia/lavoro/488835/riders-diritti-glovo-deliveroo-2026.html"},
+  {d:"2026-04-02", l:"apr 2026", c:"sanz", t:"Antitrust: multa da 11,5 milioni",
+   b:"Tre sanzioni: 5 milioni per le informazioni sui costi degli investimenti, 5 milioni per i blocchi «aggressivi» dei conti, 1,5 milioni per la migrazione all'Iban italiano. Revolut ha presentato ricorso.",
+   s:"Il Fatto Quotidiano", u:"https://www.ilfattoquotidiano.it/2026/04/02/revolut-sanzione-antitrust-milioni-notizie/8343499/"},
+  {d:"2026-09-12", l:"set 2026", c:"sanz", t:"Dati di 680 clienti consegnati a falsi inquirenti",
+   b:"Da una casella Pec della pubblica amministrazione compromessa partono finte richieste dell'autorità giudiziaria: Revolut consegna i dati di circa 680 clienti, 8 dei quali italiani. Banca d'Italia apre un fascicolo.",
+   s:"Bluerating", u:"https://www.bluerating.com/banche-e-reti/876998/faro-bankitalia-su-revolut"},
+  {d:"2026-10-09", l:"ott 2026", c:"rev", t:"Sei milioni di clienti in Italia",
+   b:"L'Italia è il quarto mercato del gruppo, con una penetrazione dichiarata superiore al 10%.",
+   s:"Teleborsa", u:"https://www.teleborsa.it/DettaglioNews/27_2026-10-09_TLB/Revolut-raggiunge-6-milioni-di-clienti-in-Italia-si-conferma-quarto-mercato-pi-grande.html"},
+  {d:"2026-11-06", l:"nov 2026", c:"rev", t:"Via libera Bce al doppio hub Lituania-Francia",
+   b:"Parte delle attività di Revolut Bank UAB passerà alla nuova banca francese da dicembre 2026, a partire dai clienti francesi.",
+   s:"The Paypers", u:"https://thepaypers.com/fintech/news/ecb-clears-partial-move-of-revoluts-lithuanian-operations-to-france"},
+  {d:"2026-11-16", l:"16 nov 2026", c:"sanz", k:true, t:"Amministrazione giudiziaria per un anno",
+   b:"Il Tribunale di Milano, su richiesta del pm Storari, affianca due amministratori alla succursale italiana per «gravi carenze» nei presidi antiriciclaggio. Secondo la procura il modello gestionale avrebbe agevolato operazioni per 76,5 milioni. I servizi ai clienti proseguono.",
+   s:"Ansa", u:"https://www.ansa.it/sito/notizie/cronaca/2026/11/16/riciclaggio-con-aggravante-mafiosa-amministrazione-giudiziaria-per-revolut_826ace80-1187-47af-9cab-866fe3539d56.html"}
+];
+const LABEL={rev:"Crescita e licenze",sanz:"Sanzioni e indagini",mil:"Precedenti a Milano"};
+const COLOR={rev:"var(--rev)",sanz:"var(--sanz)",mil:"var(--mil)"};
+const tl=document.getElementById('tl');
+EVENTS.sort((a,b)=>a.d.localeCompare(b.d)).forEach((e,i)=>{
+  const li=document.createElement('li');
+  li.className='ev'+(e.k?' key':''); li.dataset.c=e.c; li.style.setProperty('--c',COLOR[e.c]);
+  li.innerHTML=`<div class="date">${e.l}</div>
+   <div class="card${e.k?' open':''}"><button aria-expanded="${!!e.k}" aria-controls="b${i}">
+   <span class="tag">${LABEL[e.c]}</span><div class="t">${e.t}</div></button>
+   <div class="body" id="b${i}">${e.b}<div class="src">Fonte: <a href="${e.u}" target="_blank" rel="noopener">${e.s}</a></div></div></div>`;
+  tl.appendChild(li);
+});
+tl.addEventListener('click',ev=>{
+  const btn=ev.target.closest('button'); if(!btn) return;
+  const card=btn.parentElement; const open=card.classList.toggle('open');
+  btn.setAttribute('aria-expanded',open); postHeight();
+});
+document.querySelectorAll('.chip').forEach(ch=>ch.addEventListener('click',()=>{
+  document.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed','false'));
+  ch.setAttribute('aria-pressed','true');
+  const f=ch.dataset.f;
+  document.querySelectorAll('.ev').forEach(li=>li.hidden=!(f==='all'||li.dataset.c===f));
+  postHeight();
+}));
+// altezza per l'iframe responsive nel CMS
+function postHeight(){try{parent.postMessage({sentinel:'radar-qn',type:'height',height:document.documentElement.scrollHeight},'*')}catch(e){}}
+window.addEventListener('load',postHeight); window.addEventListener('resize',postHeight);
 </script>
 </body>
 </html>
