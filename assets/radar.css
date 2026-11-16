@@ -9,7 +9,7 @@
   --grey: #8a8a8a;
   --grey-dark: #4d4d4d;
   --grey-light: #c9c9c9;
-  --bg: #ffffff;
+  --bg: #f7f8f9;   /* grigio di sfondo del sito QN */
 }
 
 * { box-sizing: border-box; }
@@ -108,7 +108,7 @@ html, body {
 .series-label--sub { font-size: 12px; font-weight: 400; fill: var(--ink-2); }
 
 /* ---------- Annotazioni ---------- */
-.anno text { font-size: 13px; line-height: 1.35; fill: var(--ink); paint-order: stroke; stroke: #fff; stroke-width: 4px; stroke-linejoin: round; }
+.anno text { font-size: 13px; line-height: 1.35; fill: var(--ink); paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; }
 .anno text .em { font-weight: 600; }
 .anno line, .anno path {
   paint-order: normal; stroke: var(--ink); stroke-width: 0.75; fill: none; }
@@ -156,9 +156,9 @@ html, body {
 }
 .r-key span { display: inline-flex; align-items: center; gap: 6px; }
 .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; flex: none; }
-.sw--ring { border-radius: 50%; border: 2px solid var(--blue); background: #fff; }
+.sw--ring { border-radius: 50%; border: 2px solid var(--blue); background: var(--bg); }
 .sw--hatch {
-  background: repeating-linear-gradient(135deg, var(--blue-light) 0 2px, #fff 2px 4px);
+  background: repeating-linear-gradient(135deg, var(--blue-light) 0 2px, var(--bg) 2px 4px);
   border: 1px solid var(--blue-light);
 }
 .r-note { font-size: 12px; line-height: 1.45; color: var(--ink-2); margin: 12px 0 0; }

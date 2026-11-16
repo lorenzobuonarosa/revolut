@@ -151,8 +151,8 @@
         .attr("cx", function (d) { return x(d.date); })
         .attr("cy", function (d) { return y(d.v); })
         .attr("r", function (d) { return d === last ? 5 : 4; })
-        .attr("fill", function (d) { return d.approx ? "#fff" : (d === last ? "#d1452f" : "#1f4fd1"); })
-        .attr("stroke", function (d) { return d.approx ? "#1f4fd1" : "#fff"; })
+        .style("fill", function (d) { return d.approx ? "var(--bg)" : (d === last ? "#d1452f" : "#1f4fd1"); })
+        .style("stroke", function (d) { return d.approx ? "#1f4fd1" : "var(--bg)"; })
         .attr("stroke-width", function (d) { return d.approx ? 1.75 : 1.5; });
       pts.each(function (d) {
         var s = d3.select(this), delay = (x(d.date) / w) * R.DUR;

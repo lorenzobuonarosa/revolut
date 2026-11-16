@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#1a1a1a; --muted:#6b6b6b; --line:#e3e3e3; --bg:#ffffff;
+    --ink:#1a1a1a; --muted:#6b6b6b; --line:#e3e3e3; --bg:#f7f8f9;
     --rev:#1f4fd1;       /* Revolut: crescita e licenze */
     --sanz:#d1452f;      /* sanzioni e indagini */
     --mil:#8a8a8a;       /* precedenti tribunale di Milano */
@@ -27,7 +27,7 @@
   .ev{position:relative;display:grid;grid-template-columns:80px 1fr;gap:26px;padding:0 0 16px}
   .ev[hidden]{display:none}
   .date{text-align:right;font-size:12.5px;color:var(--muted);font-weight:600;padding-top:2px;font-variant-numeric:tabular-nums}
-  .ev:before{content:"";position:absolute;left:87px;top:5px;width:12px;height:12px;border-radius:50%;background:var(--c);box-shadow:0 0 0 3px #fff}
+  .ev:before{content:"";position:absolute;left:87px;top:5px;width:12px;height:12px;border-radius:50%;background:var(--c);box-shadow:0 0 0 3px var(--bg)}
   .ev.key:before{width:16px;height:16px;left:85px;top:3px}
   .card{border-left:3px solid transparent}
   .card button{all:unset;cursor:pointer;display:block;width:100%}
