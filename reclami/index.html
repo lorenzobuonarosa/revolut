@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>I reclami ricevuti da Revolut Italia – Radar QN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/radar.css">
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="../assets/radar.js"></script>
+</head>
+<body>
+<main class="radar">
+  <header>
+    <h1 class="r-title">Perché i clienti si lamentano con Revolut</h1>
+    <p class="r-sub">Reclami ricevuti dalla succursale italiana nel 2025, per motivo ed esito</p>
+  </header>
+
+  <div class="r-big" id="big" aria-hidden="true">
+    <span class="r-big__num" id="big-num">&nbsp;</span>
+    <span class="r-big__label" id="big-label"></span>
+  </div>
+
+  <figure class="r-chart" id="motivi">
+    <p class="r-chart__head">Per motivo</p>
+    <p class="r-chart__sub">Numero di reclami</p>
+  </figure>
+
+  <figure class="r-chart" id="esiti">
+    <p class="r-chart__head">Per esito</p>
+    <p class="r-chart__sub">Quota sul totale dei reclami</p>
+  </figure>
+  <p class="r-note" id="note-esiti"></p>
+  <p class="r-note" id="note-tot"></p>
+
+  <footer class="r-foot">
+    <span>Fonte: Revolut, Rendiconto sulla gestione dei reclami 2025</span>
+    <span>Elaborazione Radar – QN</span>
+  </footer>
+</main>
+
+<script>
+(function () {
+  var R = Radar, fmt = R.fmt, f0 = function (v) { return fmt(v, 0); };
+  var HL = "Apertura o restrizioni del conto";
+
+  Promise.all([R.loadCSV("../data/reclami-motivi.csv"), R.loadCSV("../data/reclami-esiti.csv")]).then(function (res) {
+    var motivi = res[0].map(function (r) { return { k: r["Motivo"], v: R.num(r["Reclami"]) }; });
+    var esiti = res[1].map(function (r) { return { k: r["Esito"], v: R.num(r["Reclami"]) }; });
+
+    // ordinamento: dal più grande, "Altro" sempre in fondo
+    motivi.sort(function (a, b) {
+      if (a.k === "Altro") return 1;
+      if (b.k === "Altro") return -1;
+      return b.v - a.v;
+    });
+    var totMotivi = d3.sum(motivi, function (d) { return d.v; });
+    var totEsiti = d3.sum(esiti, function (d) { return d.v; });   // totale dichiarato
+    var hl = motivi.find(function (d) { return d.k === HL; });
+
+    // esiti piccoli (sotto l'1%) vanno in nota
+    var main = esiti.filter(function (d) { return d.v / totEsiti >= 0.01; });
+    var small = esiti.filter(function (d) { return d.v / totEsiti < 0.01; });
+
+    // ---- Big number ----
+    var bigNum = d3.select("#big-num");
+    d3.select("#big-label").text("reclami ricevuti nel 2025 dalla succursale italiana");
+    if (R.reduced) bigNum.text(f0(totEsiti));
+    else { bigNum.text(f0(0)); R.onFirstView(document.getElementById("big"), function () { R.countUp(bigNum, totEsiti, f0, "play"); }); }
+
+    d3.select("#note-esiti").text(small.map(function (d) {
+      return d.k.replace("/", " o ") + ": " + f0(d.v) + " (" + R.pct(d.v / totEsiti) + ")";
+    }).join("; ") + (small.length ? "." : ""));
+    d3.select("#note-tot").text("Totale dichiarato: " + f0(totEsiti) + " reclami. La somma dei motivi nel documento di Revolut è " + f0(totMotivi) + ".");
+
+    // ================= Motivi =================
+    var host = document.getElementById("motivi");
+    var tip = R.tooltip(host);
+    var clear = function () {};
+    R.dismissOutside(host, function () { tip.hide(); clear(); });
+
+    R.responsive(host, function (W, phase) {
+      var narrow = R.isNarrow(W);
+      var row = 50, bh = 16, labH = 20;
+      var annoRight = !narrow;
+      var annoW = 176;
+      var iHL = motivi.indexOf(hl), extra = annoRight ? 0 : 44;
+      var yOf = function (i) { return i * row + (i > iHL ? extra : 0); };
+      var H = row * motivi.length + extra;
+      var plotW = W - (annoRight ? annoW + 24 : 0);
+      var x = d3.scaleLinear().domain([0, d3.max(motivi, function (d) { return d.v; })]).range([0, plotW - 44]);
+
+      d3.select(host).select("svg").remove();
+      var svg = d3.select(host).insert("svg", ".r-tip").attr("width", W).attr("height", H).attr("role", "img")
+        .attr("aria-label", "Grafico a barre: i reclami a Revolut Italia nel 2025 per motivo. " +
+          motivi.map(function (d) { return d.k + ": " + f0(d.v); }).join("; ") + ".");
+      svg.append("title").text("Reclami ricevuti dalla succursale italiana di Revolut nel 2025, per motivo");
+      var g = svg.append("g");
+
+      var rows = g.selectAll("g.row").data(motivi).join("g").attr("class", "row mark")
+        .attr("transform", function (d, i) { return "translate(0," + yOf(i) + ")"; });
+      rows.append("text").attr("class", "series-label").attr("y", 13)
+        .style("font-weight", function (d) { return d === hl ? 600 : 500; })
+        .style("fill", function (d) { return d.k === "Altro" ? "#6b6b6b" : null; })
+        .text(function (d) { return d.k; });
+      var bars = rows.append("path")
+        .attr("fill", function (d) { return d === hl ? "#d1452f" : d.k === "Altro" ? "#8a8a8a" : "#1f4fd1"; });
+      R.enter(bars, phase,
+        function (s) { s.attr("d", function () { return R.barPathH(0, labH, 0, bh, 2); }); },
+        function (s) { s.attrTween("d", function (d) { return function (t) { return R.barPathH(0, labH, x(d.v) * t, bh, 2); }; }); });
+      var vals = rows.append("text").attr("class", "val-label").attr("x", function (d) { return x(d.v) + 7; })
+        .attr("y", labH + bh / 2).attr("dy", "0.35em");
+      vals.each(function (d) { R.countUp(d3.select(this), d.v, f0, phase); });
+
+      // annotazione sul motivo evidenziato
+      var i = motivi.indexOf(hl);
+      var share = hl.v / totEsiti;
+      var an = g.append("g").attr("class", "anno");
+      var t1 = "Più di un reclamo su cinque riguarda l'apertura del conto o le sue restrizioni";
+      if (share < 0.2) t1 = R.pct(share) + " dei reclami riguarda l'apertura del conto o le sue restrizioni";
+      var ay = yOf(i) + labH + bh / 2;
+      if (annoRight) {
+        var ax = plotW + 24;
+        var txt = an.append("text").attr("x", ax).attr("y", ay - 4).text(t1).call(R.wrap, annoW);
+        an.append("path").attr("d", "M" + (x(hl.v) + 46) + "," + ay + "H" + (ax - 6));
+        an.append("circle").attr("cx", x(hl.v) + 46).attr("cy", ay).attr("r", 1.75);
+      } else {
+        var ty = yOf(i) + labH + bh + 18;
+        an.append("path").attr("d", "M0.5," + (yOf(i) + labH + bh + 4) + "V" + (ty + 22));
+        an.append("text").attr("x", 8).attr("y", ty).text(t1).call(R.wrap, W - 12);
+      }
+      R.enter(an, phase, function (s) { s.style("opacity", 0); }, function (s) { s.style("opacity", 1); }, R.DUR * 0.7);
+
+      clear = function () { rows.classed("is-dimmed", false); };
+      g.append("g").selectAll("rect").data(motivi).join("rect").attr("class", "hit")
+        .attr("x", 0).attr("width", plotW).attr("y", function (d, i) { return yOf(i); }).attr("height", row)
+        .on("pointerenter pointerdown", function (ev, d) {
+          rows.classed("is-dimmed", function (q) { return q !== d; });
+          var i = motivi.indexOf(d);
+          tip.show(R.tipHTML({
+            title: d.k, value: f0(d.v), unit: "reclami",
+            rows: [["Quota sulla somma dei motivi", R.pct(d.v / totMotivi)]]
+          }), Math.min(x(d.v), plotW - 10), yOf(i) + labH);
+        })
+        .on("pointerleave", function (ev) { if (ev.pointerType === "mouse") { tip.hide(); clear(); } });
+    });
+
+    // ================= Esiti: barra unica al 100% =================
+    var host2 = document.getElementById("esiti");
+    var tip2 = R.tooltip(host2);
+    var clear2 = function () {};
+    R.dismissOutside(host2, function () { tip2.hide(); clear2(); });
+    var COL = ["#1f4fd1", "#9fb3ec", "#8a8a8a"];
+    var acc = 0;
+    var segs = main.map(function (d, i) { var s = { d: d, x0: acc, x1: acc + d.v, c: COL[i] || "#c9c9c9" }; acc += d.v; return s; });
+    var rej = segs.find(function (s) { return /respint/i.test(s.d.k); });
+
+    R.responsive(host2, function (W, phase) {
+      var narrow = R.isNarrow(W);
+      var top = 44, bh = 36;
+      var H = top + bh + 50;
+      var x = d3.scaleLinear().domain([0, totEsiti]).range([0, W]);
+      var GAP = 2;
+
+      d3.select(host2).select("svg").remove();
+      var svg = d3.select(host2).insert("svg", ".r-tip").attr("width", W).attr("height", H).attr("role", "img")
+        .attr("aria-label", "Grafico a barra: esito dei reclami a Revolut Italia nel 2025. " +
+          main.map(function (d) { return d.k + " " + R.pct(d.v / totEsiti); }).join(", ") + ".");
+      svg.append("title").text("Esito dei reclami ricevuti nel 2025, quota sul totale");
+      var g = svg.append("g");
+
+      var bars = g.selectAll("path.seg").data(segs).join("path").attr("class", "seg mark").attr("fill", function (s) { return s.c; });
+      function geom(s, t) {
+        var x0 = x(s.x0) * t, x1 = x(s.x1) * t;
+        var isLast = s === segs[segs.length - 1];
+        var wdt = Math.max(0, x1 - x0 - (isLast ? 0 : GAP));
+        return isLast ? R.barPathH(x0, top, wdt, bh, 2) : "M" + x0 + "," + top + "h" + wdt + "v" + bh + "h" + (-wdt) + "Z";
+      }
+      R.enter(bars, phase,
+        function (s) { s.attr("d", function (q) { return geom(q, 0); }); },
+        function (s) { s.attrTween("d", function (q) { return function (t) { return geom(q, t); }; }); });
+
+      // percentuali dentro i segmenti
+      var pcts = g.selectAll("text.pin").data(segs).join("text").attr("class", "pin mark")
+        .attr("x", function (s) { return x(s.x0) + 8; }).attr("y", top + bh / 2).attr("dy", "0.35em")
+        .style("font-size", narrow ? "13px" : "15px").style("font-weight", 700)
+        .style("fill", function (s) { return s.c === "#9fb3ec" ? "#1a1a1a" : "#fff"; });
+      pcts.each(function (s) { R.countUp(d3.select(this), s.d.v / totEsiti * 100, function (v) { return fmt(v, 1) + "%"; }, phase); });
+
+      // nomi: sopra la barra (primo a sinistra, ultimo a destra), il centrale sotto
+      var names = g.selectAll("text.nm").data(segs).join("text").attr("class", "nm series-label mark")
+        .each(function (s, i) {
+          var t = d3.select(this), last = i === segs.length - 1;
+          if (i === 0) t.attr("x", x(s.x0)).attr("y", top - 10).attr("text-anchor", "start");
+          else if (last) t.attr("x", x(s.x1)).attr("y", top - 10).attr("text-anchor", "end");
+          else t.attr("x", x(s.x0)).attr("y", top + bh + 18).attr("text-anchor", "start");
+        })
+        .text(function (s) { return s.d.k; });
+      // tacche sottili che collegano il nome centrale
+      g.selectAll("line.tk").data(segs.filter(function (s, i) { return i > 0 && i < segs.length - 1; })).join("line")
+        .attr("class", "tk").attr("stroke", "#1a1a1a").attr("stroke-width", 0.75)
+        .attr("x1", function (s) { return x(s.x0) + 0.5; }).attr("x2", function (s) { return x(s.x0) + 0.5; })
+        .attr("y1", top + bh + 2).attr("y2", top + bh + 6);
+
+      // annotazione: quota dei respinti
+      if (rej) {
+        var share = rej.d.v / totEsiti;
+        var an = g.append("g").attr("class", "anno");
+        var label = share > 0.6 && share < 2 / 3 ? "Quasi due reclami su tre sono stati respinti" : R.pct(share) + " dei reclami è stato respinto";
+        an.append("text").attr("x", x(rej.x1)).attr("y", top + bh + (narrow ? 44 : 18)).attr("text-anchor", "end").text(label)
+          .call(R.wrap, narrow ? Math.min(150, x(rej.x1) - x(rej.x0) - 10) : 320);
+        R.enter(an, phase, function (s) { s.style("opacity", 0); }, function (s) { s.style("opacity", 1); }, R.DUR * 0.8);
+      }
+
+      clear2 = function () { bars.classed("is-dimmed", false); pcts.classed("is-dimmed", false); names.classed("is-dimmed", false); };
+      g.selectAll("rect.hit").data(segs).join("rect").attr("class", "hit")
+        .attr("x", function (s) { return x(s.x0); }).attr("width", function (s) { return x(s.x1) - x(s.x0); })
+        .attr("y", 0).attr("height", top + bh + 8)
+        .on("pointerenter pointerdown", function (ev, s) {
+          bars.classed("is-dimmed", function (q) { return q !== s; });
+          pcts.classed("is-dimmed", function (q) { return q !== s; });
+          names.classed("is-dimmed", function (q) { return q !== s; });
+          tip2.show(R.tipHTML({ title: s.d.k, value: R.pct(s.d.v / totEsiti), unit: "del totale", rows: [["Reclami", f0(s.d.v)]] }),
+            x((s.x0 + s.x1) / 2), top);
+        })
+        .on("pointerleave", function (ev) { if (ev.pointerType === "mouse") { tip2.hide(); clear2(); } });
+      // altezza effettiva in base alle righe dell'annotazione
+      var bb = g.node().getBBox();
+      svg.attr("height", Math.ceil(bb.y + bb.height + 4));
+    });
+  }).catch(function (e) { R.fail("#motivi", e); });
+})();
+</script>
+</body>
+</html>

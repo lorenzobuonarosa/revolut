@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>I conti di Revolut Bank – Radar QN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/radar.css">
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="../assets/radar.js"></script>
+</head>
+<body>
+<main class="radar">
+  <header>
+    <h1 class="r-title">Una banca che raccoglie e fa utili</h1>
+    <p class="r-sub">Revolut Bank UAB, depositi dei clienti in miliardi di euro e utile netto in milioni di euro</p>
+  </header>
+
+  <div class="r-big" id="big" aria-hidden="true">
+    <span><span class="r-big__num" id="big-num">&nbsp;</span> <span class="r-big__unit">mld €</span></span>
+    <span class="r-big__label" id="big-label"></span>
+  </div>
+
+  <div class="r-panels" id="panels">
+    <figure class="r-chart" id="dep">
+      <p class="r-chart__head">Depositi della clientela</p>
+      <p class="r-chart__sub">Miliardi di euro</p>
+    </figure>
+    <figure class="r-chart" id="utile">
+      <p class="r-chart__head">Utile netto</p>
+      <p class="r-chart__sub">Milioni di euro</p>
+    </figure>
+  </div>
+  <div class="r-key"><span><i class="sw sw--hatch"></i>Primo semestre: l'utile non è confrontabile con gli anni interi</span></div>
+
+  <footer class="r-foot">
+    <span>Fonte: Revolut Bank UAB, report finanziari</span>
+    <span>Elaborazione Radar – QN</span>
+  </footer>
+</main>
+
+<script>
+(function () {
+  var R = Radar, fmt = R.fmt;
+  var COL = { dep: "Depositi clientela (mld €)", att: "Totale attivo (mld €)", pn: "Patrimonio netto (mld €)", ut: "Utile netto (mln €)" };
+
+  R.loadCSV("../data/conti.csv").then(function (rows) {
+    var data = rows.map(function (r) {
+      var p = r["Periodo"];
+      return {
+        p: p,
+        partial: !/^\d{4}$/.test(p.trim()),   // periodo non annuale (semestre)
+        dep: R.num(r[COL.dep]), att: R.num(r[COL.att]), pn: R.num(r[COL.pn]), ut: R.num(r[COL.ut])
+      };
+    });
+    var last = data[data.length - 1];
+    var full = data.filter(function (d) { return !d.partial; });
+
+    // ---- Big number: depositi all'ultimo periodo ----
+    var bigNum = d3.select("#big-num"), f2 = function (v) { return fmt(v, 2); };
+    d3.select("#big-label").text("depositi dei clienti a fine " + last.p.replace("1° sem.", "primo semestre") +
+      ", " + fmt(last.dep / data[0].dep, 1).replace(/,0$/, "") + " volte quelli del " + data[0].p);
+    if (R.reduced) bigNum.text(f2(last.dep));
+    else { bigNum.text(f2(0)); R.onFirstView(document.getElementById("big"), function () { R.countUp(bigNum, last.dep, f2, "play"); }); }
+
+    // ---- stato condiviso per l'evidenziazione tra i due pannelli ----
+    var panels = [];
+    function highlight(d) { panels.forEach(function (p) { p.highlight(d); }); }
+
+    function tipFor(d, key) {
+      var isDep = key === "dep";
+      return R.tipHTML({
+        title: d.p,
+        value: isDep ? fmt(d.dep, 2) : fmt(d.ut, 1),
+        unit: isDep ? "mld € di depositi" : "mln € di utile netto",
+        rows: [
+          isDep ? ["Utile netto", fmt(d.ut, 1) + " mln €"] : ["Depositi clientela", fmt(d.dep, 2) + " mld €"],
+          ["Totale attivo", fmt(d.att, 2) + " mld €"],
+          ["Patrimonio netto", fmt(d.pn, 2) + " mld €"]
+        ],
+        note: d.partial ? "Dato semestrale: l'utile non è confrontabile con gli anni interi" : null
+      });
+    }
+
+    function panel(id, key, dec, opts) {
+      var host = document.getElementById(id);
+      var tip = R.tooltip(host);
+      var api = { highlight: function () {} };
+      panels.push(api);
+      R.dismissOutside(document.getElementById("panels"), function () { tip.hide(); highlight(null); });
+
+      R.responsive(host, function (W, phase) {
+        var narrow = R.isNarrow(W);
+        var m = { top: 22, right: 0, bottom: 40, left: 0 };
+        var H = narrow ? 250 : 280;
+        var w = W - m.left - m.right, h = H - m.top - m.bottom;
+        var x = d3.scaleBand().domain(data.map(function (d) { return d.p; })).range([0, w]).paddingInner(0.28).paddingOuter(0.1);
+        var y = d3.scaleLinear().domain([0, d3.max(data, function (d) { return d[key]; }) * 1.04]).range([h, 0]);
+
+        d3.select(host).select("svg").remove();
+        var svg = d3.select(host).insert("svg", ".r-tip").attr("width", W).attr("height", H)
+          .attr("role", "img").attr("aria-label", opts.aria(data));
+        svg.append("title").text(opts.title);
+        var defs = svg.append("defs");
+        var pid = "hatch-" + id;
+        var pat = defs.append("pattern").attr("id", pid).attr("width", 5).attr("height", 5)
+          .attr("patternUnits", "userSpaceOnUse").attr("patternTransform", "rotate(45)");
+        pat.append("rect").attr("width", 5).attr("height", 5).attr("fill", "#fff");
+        pat.append("rect").attr("width", 2.2).attr("height", 5).attr("fill", "#9fb3ec");
+
+        var g = svg.append("g").attr("transform", "translate(" + m.left + "," + m.top + ")");
+
+        function fillOf(d) {
+          if (d.partial) return "url(#" + pid + ")";
+          return opts.red && opts.red(d) ? "#d1452f" : "#1f4fd1";
+        }
+        var bars = g.append("g").selectAll("path").data(data).join("path").attr("class", "mark")
+          .attr("fill", fillOf)
+          .attr("stroke", function (d) { return d.partial ? "#9fb3ec" : "none"; })
+          .attr("stroke-width", 1);
+        function geom(t) {
+          return function (d) {
+            var bh = (h - y(d[key])) * t;
+            return R.barPathV(x(d.p), h - bh, x.bandwidth(), bh, 2);
+          };
+        }
+        R.enter(bars, phase,
+          function (s) { s.attr("d", geom(0)); },
+          function (s) { s.attrTween("d", function (d) { var f = geom; return function (t) { return f(t)(d); }; }); });
+
+        // valori diretti sopra le barre
+        var vals = g.append("g").selectAll("text").data(data).join("text")
+          .attr("class", function (d) { return "val-label mark" + (d.partial ? " val-label--muted" : ""); })
+          .attr("x", function (d) { return x(d.p) + x.bandwidth() / 2; })
+          .attr("y", function (d) { return y(d[key]) - 6; })
+          .attr("text-anchor", "middle")
+          .style("fill", function (d) { return opts.red && opts.red(d) ? "#d1452f" : null; });
+        vals.each(function (d) { R.countUp(d3.select(this), d[key], function (v) { return fmt(v, dec); }, phase); });
+
+        // linea di base + etichette periodi (su due righe se serve)
+        g.append("line").attr("class", "baseline").attr("x1", 0).attr("x2", w).attr("y1", h + 0.5).attr("y2", h + 0.5);
+        var lab = g.append("g").selectAll("text").data(data).join("text")
+          .attr("class", "tick-label").attr("text-anchor", "middle")
+          .attr("x", function (d) { return x(d.p) + x.bandwidth() / 2; }).attr("y", h + 18);
+        lab.each(function (d) {
+          var t = d3.select(this), parts = d.p.split(/\s(?=\d{4}$)/);
+          if (parts.length > 1 && x.bandwidth() < 80) {
+            t.append("tspan").attr("x", t.attr("x")).text(parts[0]);
+            t.append("tspan").attr("x", t.attr("x")).attr("dy", 14).text(parts[1]);
+          } else t.text(d.p);
+        });
+
+        if (opts.annotate) opts.annotate(g, x, y, w, h, phase);
+
+        // interazione
+        api.highlight = function (a) {
+          bars.classed("is-dimmed", function (d) { return a && d !== a; });
+          vals.classed("is-dimmed", function (d) { return a && d !== a; });
+          if (!a) tip.hide();
+        };
+        g.append("g").selectAll("rect").data(data).join("rect").attr("class", "hit")
+          .attr("x", function (d) { return x(d.p) - x.step() * x.paddingInner() / 2; })
+          .attr("width", x.step()).attr("y", -m.top).attr("height", h + m.top + 30)
+          .on("pointerenter pointerdown", function (ev, d) {
+            panels.forEach(function (p) { if (p !== api) p.highlight(d); });
+            api.highlight(d);
+            tip.show(tipFor(d, key), x(d.p) + x.bandwidth() / 2 + m.left, y(d[key]) + m.top);
+          })
+          .on("pointerleave", function (ev) { if (ev.pointerType === "mouse") highlight(null); });
+      });
+    }
+
+    var maxUt = d3.max(full, function (d) { return d.ut; });
+    var topUt = full.find(function (d) { return d.ut === maxUt; });
+    var prevUt = full[full.indexOf(topUt) - 1];
+
+    panel("dep", "dep", 2, {
+      title: "Depositi della clientela di Revolut Bank UAB, miliardi di euro",
+      aria: function (d) { return "Grafico a barre: i depositi della clientela di Revolut Bank salgono da " + fmt(d[0].dep, 2) + " miliardi di euro nel " + d[0].p + " a " + fmt(last.dep, 2) + " miliardi nel " + last.p + "."; }
+    });
+    panel("utile", "ut", 1, {
+      title: "Utile netto di Revolut Bank UAB, milioni di euro",
+      red: function (d) { return d === topUt; },
+      aria: function () { return "Grafico a barre: l'utile netto di Revolut Bank passa da " + fmt(data[0].ut, 1) + " milioni di euro nel " + data[0].p + " a " + fmt(topUt.ut, 1) + " milioni nel " + topUt.p + ". Nel " + last.p + " è di " + fmt(last.ut, 1) + " milioni, dato semestrale."; },
+      annotate: function (g, x, y, w, h, phase) {
+        // annotazione: utile più che raddoppiato
+        if (!prevUt || topUt.ut < prevUt.ut * 2) return;
+        var an = g.append("g").attr("class", "anno");
+        var tx = x(data[0].p), ty = y(topUt.ut) + 4;
+        var txt = an.append("text").attr("x", tx).attr("y", ty)
+          .text("Nel " + topUt.p + " l'utile più che raddoppia")
+          .call(R.wrap, Math.max(90, x(topUt.p) - tx - 14));
+        var bx = x(topUt.p) - 4, by = y(topUt.ut) + 6;
+        var bb = txt.node().getBBox();
+        an.append("path").attr("d", "M" + (bb.x + bb.width + 4) + "," + (bb.y + 8) + "H" + bx);
+        an.append("circle").attr("cx", bx).attr("cy", bb.y + 8).attr("r", 1.75);
+        R.enter(an, phase, function (s) { s.style("opacity", 0); }, function (s) { s.style("opacity", 1); }, R.DUR * 0.7);
+      }
+    });
+  }).catch(function (e) { R.fail("#panels", e); });
+})();
+</script>
+</body>
+</html>

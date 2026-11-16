@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Segnalazioni di operazioni sospette alla UIF – Radar QN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/radar.css">
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="../assets/radar.js"></script>
+</head>
+<body>
+<main class="radar">
+  <header>
+    <h1 class="r-title">Le segnalazioni antiriciclaggio tornano a salire</h1>
+    <p class="r-sub">Segnalazioni di operazioni sospette ricevute dalla UIF della Banca d'Italia</p>
+  </header>
+
+  <div class="r-big" id="big" aria-hidden="true">
+    <span class="r-big__num" id="big-num">&nbsp;</span>
+    <span class="r-big__label" id="big-label"></span>
+  </div>
+
+  <figure class="r-chart" id="anni">
+    <p class="r-chart__head">Segnalazioni ricevute per anno</p>
+    <div class="r-key" id="key-anni" style="margin:0 0 6px"></div>
+  </figure>
+
+  <figure class="r-chart" id="sem">
+    <p class="r-chart__head">Gli ultimi tre semestri</p>
+    <p class="r-chart__sub">Segnalazioni ricevute per semestre</p>
+  </figure>
+
+  <footer class="r-foot">
+    <span>Fonte: UIF, Rapporto annuale 2025 e Quaderno dell'antiriciclaggio, I semestre 2026</span>
+    <span>Elaborazione Radar – QN</span>
+  </footer>
+</main>
+
+<script>
+(function () {
+  var R = Radar, fmt = R.fmt;
+  var C = { banche: "#1f4fd1", altri: "#8a8a8a", unico: "#4d4d4d", red: "#d1452f" };
+
+  Promise.all([R.loadCSV("../data/sos-annuali.csv"), R.loadCSV("../data/sos-semestrali.csv")]).then(function (res) {
+    var anni = res[0].map(function (r) {
+      var tot = R.num(r["Segnalazioni ricevute"]), b = R.num(r["Di cui Banche e Poste"]);
+      return { k: r["Anno"], tot: tot, banche: b, altri: b == null ? null : tot - b, split: b != null };
+    });
+    var sem = res[1].map(function (r) {
+      return { k: r["Semestre"], tot: R.num(r["Segnalazioni ricevute"]), banche: R.num(r["Banche e Poste"]), imel: R.num(r["IMEL"]) };
+    });
+
+    var lastY = anni[anni.length - 1], prevY = anni[anni.length - 2];
+    var growth = lastY.tot / prevY.tot - 1;
+
+    // ---- Big number ----
+    var bigNum = d3.select("#big-num"), f0 = function (v) { return fmt(v, 0); };
+    d3.select("#big-label").text("segnalazioni nel " + lastY.k + ", " + (growth >= 0 ? "+" : "") + fmt(growth * 100, 1) + "% sul " + prevY.k);
+    if (R.reduced) bigNum.text(f0(lastY.tot));
+    else { bigNum.text(f0(0)); R.onFirstView(document.getElementById("big"), function () { R.countUp(bigNum, lastY.tot, f0, "play"); }); }
+
+    // ================= Grafico annuale =================
+    var host = document.getElementById("anni");
+    var tip = R.tooltip(host);
+    var clear = function () {};
+    R.dismissOutside(host, function () { tip.hide(); clear(); });
+    var firstSplit = anni.find(function (d) { return d.split; });
+    var noSplit = anni.filter(function (d) { return !d.split; });
+
+    R.responsive(host, function (W, phase) {
+      var narrow = R.isNarrow(W);
+      // chiave a capo solo su mobile, altrimenti etichette dirette a destra
+      d3.select("#key-anni").html(narrow
+        ? '<span><i class="sw" style="background:' + C.banche + '"></i>Banche e Poste</span><span><i class="sw" style="background:' + C.altri + '"></i>Altri segnalanti</span><span><i class="sw" style="background:' + C.unico + '"></i>Totale, dettaglio non disponibile</span>'
+        : "").style("display", narrow ? null : "none");
+
+      var m = { top: 64, right: narrow ? 0 : 112, bottom: 28, left: narrow ? 50 : 58 };
+      var H = narrow ? 320 : 380;
+      var w = W - m.left - m.right, h = H - m.top - m.bottom;
+      var x = d3.scaleBand().domain(anni.map(function (d) { return d.k; })).range([0, w]).paddingInner(narrow ? 0.22 : 0.3).paddingOuter(0.05);
+      var y = d3.scaleLinear().domain([0, d3.max(anni, function (d) { return d.tot; })]).nice().range([h, 0]);
+      var ticks = y.ticks(narrow ? 3 : 4);
+
+      d3.select(host).select("svg").remove();
+      var svg = d3.select(host).insert("svg", ".r-tip").attr("width", W).attr("height", H).attr("role", "img")
+        .attr("aria-label", "Grafico a barre: le segnalazioni di operazioni sospette ricevute dalla UIF passano da " +
+          f0(anni[0].tot) + " nel " + anni[0].k + " a " + f0(lastY.tot) + " nel " + lastY.k + ", in crescita del " +
+          fmt(growth * 100, 1) + "% sul " + prevY.k + ". Dal " + firstSplit.k + " sono divise tra Banche e Poste e altri segnalanti.");
+      svg.append("title").text("Segnalazioni di operazioni sospette ricevute dalla UIF per anno");
+      var g = svg.append("g").attr("transform", "translate(" + m.left + "," + m.top + ")");
+
+      g.append("g").attr("class", "grid").selectAll("line").data(ticks).join("line")
+        .attr("x1", -m.left).attr("x2", w)
+        .attr("y1", function (d) { return Math.round(y(d)) + 0.5; }).attr("y2", function (d) { return Math.round(y(d)) + 0.5; })
+        .attr("class", function (d) { return d === 0 ? "baseline" : null; });
+      g.append("g").selectAll("text").data(ticks).join("text").attr("class", "tick-label")
+        .attr("x", -m.left).attr("y", function (d) { return y(d) - 5; })
+        .text(function (d) { return f0(d); });
+
+      // segmenti: [anno, tipo, da, a]
+      var segs = [];
+      anni.forEach(function (d) {
+        if (d.split) {
+          segs.push({ d: d, t: "banche", y0: 0, y1: d.banche });
+          segs.push({ d: d, t: "altri", y0: d.banche, y1: d.tot });
+        } else segs.push({ d: d, t: "unico", y0: 0, y1: d.tot });
+      });
+      var GAP = 2;
+      function segPath(s, t) {
+        var top = y(s.y0 + (s.y1 - s.y0) * t * 1), bot = y(s.y0);
+        if (s.t === "altri") {
+          // cresce dopo il segmento sottostante
+          var yTop = y(s.y0 + (s.y1 - s.y0) * t);
+          return R.barPathV(x(s.d.k), yTop, x.bandwidth(), Math.max(0, bot - yTop - GAP), 2);
+        }
+        var yb = y(s.y0 + (s.y1 - s.y0) * t);
+        return s.t === "banche"
+          ? "M" + x(s.d.k) + "," + bot + "V" + yb + "H" + (x(s.d.k) + x.bandwidth()) + "V" + bot + "Z"
+          : R.barPathV(x(s.d.k), yb, x.bandwidth(), bot - yb, 2);
+      }
+      var bars = g.append("g").selectAll("path").data(segs).join("path").attr("class", "mark")
+        .attr("fill", function (s) { return C[s.t]; });
+      R.enter(bars, phase,
+        function (s) { s.attr("d", function (q) { return q.t === "altri" ? segPath(q, 0) : segPath(q, 0); }); },
+        function (s) {
+          s.attrTween("d", function (q) {
+            return function (t) {
+              // le barre impilate crescono in sequenza: prima Banche, poi Altri
+              var tt = q.t === "altri" ? Math.max(0, (t - 0.45) / 0.55) : (q.t === "banche" ? Math.min(1, t / 0.55) : t);
+              if (q.t === "altri" && tt === 0) return "M0,0";
+              return segPath(q, tt);
+            };
+          });
+        });
+
+      // totali sopra le barre (solo desktop)
+      var tots = g.append("g").selectAll("text").data(narrow ? [] : anni).join("text")
+        .attr("class", "val-label mark").attr("text-anchor", "middle")
+        .attr("x", function (d) { return x(d.k) + x.bandwidth() / 2; }).attr("y", function (d) { return y(d.tot) - 6; });
+      tots.each(function (d) { R.countUp(d3.select(this), d.tot, f0, phase); });
+
+      g.append("g").selectAll("text").data(anni).join("text").attr("class", "tick-label").attr("text-anchor", "middle")
+        .attr("x", function (d) { return x(d.k) + x.bandwidth() / 2; }).attr("y", h + 18)
+        .text(function (d) { return narrow ? "’" + d.k.slice(2) : d.k; });
+
+      // etichette dirette a destra dell'ultima barra (desktop)
+      if (!narrow) {
+        var lx = x(lastY.k) + x.bandwidth() + 10;
+        var dl = g.append("g");
+        dl.append("text").attr("class", "series-label").attr("x", lx).attr("y", y(lastY.banche / 2)).attr("dy", "0.35em")
+          .text("Banche e Poste");
+        dl.append("text").attr("class", "series-label").attr("x", lx).attr("y", y(lastY.banche + lastY.altri / 2)).attr("dy", "0.35em")
+          .style("fill", "#6b6b6b").text("Altri segnalanti");
+        R.enter(dl, phase, function (s) { s.style("opacity", 0); }, function (s) { s.style("opacity", 1); }, R.DUR * 0.8);
+      }
+
+      // annotazioni (max 2)
+      var an = g.append("g").attr("class", "anno");
+      // 1) parentesi sugli anni senza dettaglio
+      var a0 = x(noSplit[0].k), a1 = x(noSplit[noSplit.length - 1].k) + x.bandwidth();
+      var bt = d3.min([y(d3.max(noSplit, function (d) { return d.tot; })) - (narrow ? 12 : 26)]);
+      an.append("path").attr("d", "M" + a0 + "," + (bt + 5) + "V" + bt + "H" + a1 + "V" + (bt + 5));
+      an.append("text").attr("x", a0).attr("y", bt - 8).style("fill", "#6b6b6b")
+        .text("Fino al " + noSplit[noSplit.length - 1].k + ": dettaglio non disponibile")
+        .call(R.wrap, narrow ? Math.max(a1 - a0, 110) : a1 - a0 + 60);
+      an.selectAll("text").each(function () {
+        var n = +this.getAttribute("data-lines") || 1;
+        if (n > 1) this.setAttribute("transform", "translate(0," + (-(n - 1) * 17.5) + ")");
+      });
+      // 2) l'ultimo anno torna a salire
+      var px = x(lastY.k) + x.bandwidth() / 2, py = y(lastY.tot) - (narrow ? 4 : 22);
+      var tx = x(prevY.k) + x.bandwidth();
+      var txt = an.append("text").attr("x", tx - 6).attr("y", -m.top + 14).attr("text-anchor", "end");
+      txt.append("tspan").attr("font-weight", 600).text((growth >= 0 ? "+" : "") + fmt(growth * 100, 1) + "% ");
+      txt.append("tspan").text("nel " + lastY.k + ", dopo due anni di calo");
+      if (narrow) {
+        txt.text(null).attr("x", tx - 6);
+        txt.append("tspan").attr("x", tx - 6).attr("font-weight", 600).text((growth >= 0 ? "+" : "") + fmt(growth * 100, 1) + "% nel " + lastY.k);
+        txt.append("tspan").attr("x", tx - 6).attr("dy", 17).text("dopo due anni di calo");
+      }
+      var tb = txt.node().getBBox();
+      an.append("path").attr("d", "M" + (tb.x + tb.width + 4) + "," + (tb.y + 9) + "H" + px + "V" + py);
+      an.append("circle").attr("cx", px).attr("cy", py).attr("r", 1.75);
+      R.enter(an, phase, function (s) { s.style("opacity", 0); }, function (s) { s.style("opacity", 1); }, R.DUR * 0.7);
+
+      // interazione
+      clear = function () { bars.classed("is-dimmed", false); tots.classed("is-dimmed", false); };
+      g.append("g").selectAll("rect").data(anni).join("rect").attr("class", "hit")
+        .attr("x", function (d) { return x(d.k) - x.step() * x.paddingInner() / 2; }).attr("width", x.step())
+        .attr("y", -20).attr("height", h + 40)
+        .on("pointerenter pointerdown", function (ev, d) {
+          bars.classed("is-dimmed", function (s) { return s.d !== d; });
+          tots.classed("is-dimmed", function (s) { return s !== d; });
+          var rows = d.split
+            ? [["Banche e Poste", f0(d.banche) + " (" + R.pct(d.banche / d.tot) + ")"], ["Altri segnalanti", f0(d.altri) + " (" + R.pct(d.altri / d.tot) + ")"]]
+            : [];
+          tip.show(R.tipHTML({ title: d.k, value: f0(d.tot), unit: "segnalazioni", rows: rows, note: d.split ? null : "Dettaglio per segnalante non disponibile" }),
+            x(d.k) + x.bandwidth() / 2 + m.left, y(d.tot) + m.top);
+        })
+        .on("pointerleave", function (ev) { if (ev.pointerType === "mouse") { tip.hide(); clear(); } });
+    });
+
+    // ================= Grafico semestrale =================
+    var host2 = document.getElementById("sem");
+    var tip2 = R.tooltip(host2);
+    var clear2 = function () {};
+    R.dismissOutside(host2, function () { tip2.hide(); clear2(); });
+    var maxSem = d3.max(sem, function (d) { return d.tot; });
+    var rec = sem.find(function (d) { return d.tot === maxSem; });
+
+    R.responsive(host2, function (W, phase) {
+      var narrow = R.isNarrow(W);
+      var labW = narrow ? 84 : 100;
+      var m = { top: 4, right: narrow ? 8 : 150, bottom: 4, left: labW };
+      var row = 34, bh = 20;
+      var H = m.top + m.bottom + row * sem.length + (narrow ? 22 : 0);
+      var w = W - m.left - m.right;
+      var x = d3.scaleLinear().domain([0, maxSem]).range([0, w - (narrow ? 50 : 56)]);
+
+      d3.select(host2).select("svg").remove();
+      var svg = d3.select(host2).insert("svg", ".r-tip").attr("width", W).attr("height", H).attr("role", "img")
+        .attr("aria-label", "Grafico a barre: nel " + rec.k + " la UIF ha ricevuto " + f0(rec.tot) + " segnalazioni, record semestrale, contro " +
+          sem.filter(function (d) { return d !== rec; }).map(function (d) { return f0(d.tot) + " nel " + d.k; }).join(" e ") + ".");
+      svg.append("title").text("Segnalazioni ricevute dalla UIF per semestre");
+      var g = svg.append("g").attr("transform", "translate(" + m.left + "," + m.top + ")");
+
+      var yy = function (i) { return i * row + (row - bh) / 2; };
+      g.append("g").selectAll("text").data(sem).join("text").attr("class", "tick-label")
+        .attr("x", -labW).attr("y", function (d, i) { return yy(i) + bh / 2; }).attr("dy", "0.35em")
+        .style("fill", function (d) { return d === rec ? "#1a1a1a" : null; })
+        .style("font-weight", function (d) { return d === rec ? 600 : null; })
+        .text(function (d) { return d.k; });
+      g.append("line").attr("class", "baseline").attr("x1", 0.5).attr("x2", 0.5).attr("y1", 0).attr("y2", row * sem.length);
+
+      var bars = g.append("g").selectAll("path").data(sem).join("path").attr("class", "mark")
+        .attr("fill", function (d) { return d === rec ? C.red : C.altri; });
+      R.enter(bars, phase,
+        function (s) { s.attr("d", function (d, i) { return R.barPathH(1, yy(i), 0, bh, 2); }); },
+        function (s) { s.attrTween("d", function (d) { var i = sem.indexOf(d); return function (t) { return R.barPathH(1, yy(i), x(d.tot) * t, bh, 2); }; }); });
+
+      var vals = g.append("g").selectAll("text").data(sem).join("text").attr("class", "val-label mark")
+        .attr("x", function (d) { return x(d.tot) + 7; }).attr("y", function (d, i) { return yy(i) + bh / 2; }).attr("dy", "0.35em");
+      vals.each(function (d) { R.countUp(d3.select(this), d.tot, f0, phase); });
+
+      // etichetta "Record semestrale"
+      var ri = sem.indexOf(rec);
+      var rl = g.append("g").attr("class", "anno");
+      if (narrow) {
+        rl.append("text").attr("x", 1).attr("y", yy(ri) + bh + 20).style("fill", C.red).attr("font-weight", 600).text("Record semestrale");
+      } else {
+        var rx = x(rec.tot) + 62;
+        rl.append("text").attr("x", rx).attr("y", yy(ri) + bh / 2).attr("dy", "0.35em").style("fill", C.red).attr("font-weight", 600).text("Record semestrale");
+      }
+      R.enter(rl, phase, function (s) { s.style("opacity", 0); }, function (s) { s.style("opacity", 1); }, R.DUR * 0.8);
+
+      clear2 = function () { bars.classed("is-dimmed", false); vals.classed("is-dimmed", false); };
+      g.append("g").selectAll("rect").data(sem).join("rect").attr("class", "hit")
+        .attr("x", -labW).attr("width", W).attr("y", function (d, i) { return i * row; }).attr("height", row)
+        .on("pointerenter pointerdown", function (ev, d) {
+          bars.classed("is-dimmed", function (q) { return q !== d; });
+          vals.classed("is-dimmed", function (q) { return q !== d; });
+          var i = sem.indexOf(d);
+          tip2.show(R.tipHTML({
+            title: d.k, value: f0(d.tot), unit: "segnalazioni",
+            rows: [["Banche e Poste", f0(d.banche)], ["IMEL", f0(d.imel)]],
+            note: d === rec ? "Record semestrale" : null
+          }), Math.min(x(d.tot) + m.left, W - 20), yy(i) + m.top);
+        })
+        .on("pointerleave", function (ev) { if (ev.pointerType === "mouse") { tip2.hide(); clear2(); } });
+    });
+  }).catch(function (e) { R.fail("#anni", e); });
+})();
+</script>
+</body>
+</html>

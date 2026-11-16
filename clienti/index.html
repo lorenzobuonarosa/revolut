@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clienti di Revolut in Italia – Radar QN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/radar.css">
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="../assets/radar.js"></script>
+</head>
+<body>
+<main class="radar">
+  <header>
+    <h1 class="r-title">Da uno a sei milioni di clienti in quattro anni</h1>
+    <p class="r-sub">Clienti di Revolut in Italia, in milioni. Dati comunicati dall'azienda</p>
+  </header>
+
+  <div class="r-big" id="big" aria-hidden="true">
+    <span><span class="r-big__num" id="big-num">&nbsp;</span> <span class="r-big__unit">mln</span></span>
+    <span class="r-big__label" id="big-label"></span>
+  </div>
+
+  <figure class="r-chart" id="chart" style="margin-top:20px"></figure>
+  <div class="r-key"><span><i class="sw sw--ring"></i>Valore approssimato</span></div>
+
+  <footer class="r-foot">
+    <span>Fonte: Revolut, Teleborsa, Milano Finanza, AFP</span>
+    <span>Elaborazione Radar – QN</span>
+  </footer>
+</main>
+
+<script>
+(function () {
+  var R = Radar, fmt = R.fmt;
+  var monthLong = R.timeLocale.format("%B %Y");
+  var monthShortRaw = R.timeLocale.format("%b|%Y");
+  function monthShort(d) { var p = monthShortRaw(d).split("|"); return p[0] + ". " + p[1]; }
+  function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  R.loadCSV("../data/clienti.csv").then(function (rows) {
+    var parse = d3.timeParse("%Y-%m");
+    var data = rows.map(function (r) {
+      var note = r["Nota"] || "";
+      return {
+        key: r["Data"],
+        date: parse(r["Data"]),
+        v: R.num(r["Clienti (milioni)"]),
+        note: note,
+        approx: /approssimat/i.test(note)
+      };
+    }).filter(function (d) { return d.date && d.v != null; })
+      .sort(function (a, b) { return a.date - b.date; });
+
+    var first = data[0], last = data[data.length - 1];
+    var branch = parse("2024-11");
+
+    // ---- Big number ----
+    var bigNum = d3.select("#big-num");
+    d3.select("#big-label").text("clienti in Italia a " + monthLong(last.date));
+    var bigFmt = function (v) { return fmt(v, 0); };
+    if (R.reduced) bigNum.text(bigFmt(last.v));
+    else {
+      bigNum.text(bigFmt(0));
+      R.onFirstView(document.getElementById("big"), function () { R.countUp(bigNum, last.v, bigFmt, "play"); });
+    }
+
+    var host = document.getElementById("chart");
+    var tip = R.tooltip(host);
+    R.dismissOutside(host, function () { tip.hide(); clearActive(); });
+    var clearActive = function () {};
+
+    R.responsive(host, function (W, phase) {
+      var narrow = R.isNarrow(W);
+      var m = { top: 12, right: narrow ? 58 : 76, bottom: 30, left: 26 };
+      var H = narrow ? 290 : 350;
+      var w = W - m.left - m.right, h = H - m.top - m.bottom;
+
+      var x = d3.scaleTime()
+        .domain([d3.timeMonth.offset(first.date, -2), d3.timeMonth.offset(last.date, 2)])
+        .range([0, w]);
+      var yMax = Math.ceil(d3.max(data, function (d) { return d.v; }) + 1);
+      var y = d3.scaleLinear().domain([0, yMax]).range([h, 0]);
+      var yTicks = d3.range(0, yMax + 0.001, narrow ? 2 : 1);
+
+      d3.select(host).select("svg").remove();
+      var svg = d3.select(host).insert("svg", ".r-tip")
+        .attr("width", W).attr("height", H)
+        .attr("role", "img")
+        .attr("aria-label", "Grafico a linee: i clienti di Revolut in Italia passano da " +
+          fmt(first.v, 0) + " milione a " + monthLong(first.date) + " a " + fmt(last.v, 0) +
+          " milioni a " + monthLong(last.date) + ". La succursale italiana apre a novembre 2024.");
+      svg.append("title").text("Clienti di Revolut in Italia, in milioni");
+      var g = svg.append("g").attr("transform", "translate(" + m.left + "," + m.top + ")");
+
+      // griglia + etichette Y
+      var grid = g.append("g").attr("class", "grid");
+      grid.selectAll("line").data(yTicks).join("line")
+        .attr("x1", 0).attr("x2", w)
+        .attr("y1", function (d) { return Math.round(y(d)) + 0.5; })
+        .attr("y2", function (d) { return Math.round(y(d)) + 0.5; })
+        .attr("class", function (d) { return d === 0 ? "baseline" : null; });
+      g.append("g").selectAll("text").data(yTicks).join("text")
+        .attr("class", "tick-label")
+        .attr("x", -8).attr("y", function (d) { return y(d); }).attr("dy", "0.35em")
+        .attr("text-anchor", "end")
+        .text(function (d) { return fmt(d, 0); });
+
+      // asse X: anni veri
+      var years = x.ticks(d3.timeYear.every(1)).filter(function (d) { return x(d) > 10 && x(d) < w - 10; });
+      var xa = g.append("g").attr("transform", "translate(0," + h + ")");
+      xa.selectAll("line").data(years).join("line")
+        .attr("x1", function (d) { return Math.round(x(d)) + 0.5; })
+        .attr("x2", function (d) { return Math.round(x(d)) + 0.5; })
+        .attr("y1", 0).attr("y2", 5).attr("stroke", "#1a1a1a");
+      xa.selectAll("text").data(years).join("text")
+        .attr("class", "tick-label").attr("x", function (d) { return x(d); }).attr("y", 20)
+        .attr("text-anchor", "middle").text(d3.timeFormat("%Y"));
+
+      // annotazione verticale: succursale italiana
+      var an = g.append("g").attr("class", "anno");
+      var bx = Math.round(x(branch)) + 0.5;
+      an.append("line").attr("class", "dash").attr("x1", bx).attr("x2", bx).attr("y1", 0).attr("y2", h);
+      var tw = Math.min(narrow ? 112 : 170, bx - 12);
+      an.append("text").attr("x", bx - 8).attr("y", 12).attr("text-anchor", "end")
+        .attr("font-weight", 600).text(cap(monthShort(branch)));
+      an.append("text").attr("x", bx - 8).attr("y", 30).attr("text-anchor", "end")
+        .text("Apre la succursale italiana, arrivano gli Iban IT")
+        .call(R.wrap, tw);
+      R.enter(an, phase, function (s) { s.style("opacity", 0); }, function (s) { s.style("opacity", 1); }, R.DUR * 0.4);
+
+      // linea
+      var line = d3.line().x(function (d) { return x(d.date); }).y(function (d) { return y(d.v); });
+      var path = g.append("path").datum(data)
+        .attr("fill", "none").attr("stroke", "#1f4fd1").attr("stroke-width", 2.25)
+        .attr("stroke-linejoin", "round").attr("stroke-linecap", "round")
+        .attr("d", line);
+      var L = path.node().getTotalLength();
+      R.enter(path, phase,
+        function (s) { s.attr("stroke-dasharray", L + " " + L).attr("stroke-dashoffset", L); },
+        function (s) { s.attr("stroke-dashoffset", 0); });
+
+      // crosshair
+      var cross = g.append("line").attr("class", "crosshair").attr("y1", 0).attr("y2", h).style("opacity", 0);
+
+      // punti
+      var pts = g.append("g").selectAll("circle").data(data).join("circle")
+        .attr("class", "mark")
+        .attr("cx", function (d) { return x(d.date); })
+        .attr("cy", function (d) { return y(d.v); })
+        .attr("r", function (d) { return d === last ? 5 : 4; })
+        .attr("fill", function (d) { return d.approx ? "#fff" : (d === last ? "#d1452f" : "#1f4fd1"); })
+        .attr("stroke", function (d) { return d.approx ? "#1f4fd1" : "#fff"; })
+        .attr("stroke-width", function (d) { return d.approx ? 1.75 : 1.5; });
+      pts.each(function (d) {
+        var s = d3.select(this), delay = (x(d.date) / w) * R.DUR;
+        R.enter(s, phase, function (s) { s.style("opacity", 0); }, function (s) { s.style("opacity", 1); }, delay);
+      });
+
+      // etichetta diretta sull'ultimo punto
+      var lab = g.append("g").attr("transform", "translate(" + (x(last.date) + 10) + "," + y(last.v) + ")");
+      lab.append("text").attr("class", "series-label").attr("dy", "0.35em").text(fmt(last.v, 0) + " mln");
+      lab.append("text").attr("class", "series-label--sub").attr("dy", "1.65em").text(monthShort(last.date));
+      R.enter(lab, phase, function (s) { s.style("opacity", 0); }, function (s) { s.style("opacity", 1); }, R.DUR * 0.85);
+
+      // interazione: crosshair verticale + tooltip sul punto più vicino
+      function activate(d) {
+        var cx = x(d.date), cy = y(d.v);
+        cross.attr("x1", cx).attr("x2", cx).style("opacity", 1);
+        pts.attr("r", function (p) { return p === d ? 6 : (p === last ? 5 : 4); })
+          .classed("is-dimmed", function (p) { return p !== d; });
+        tip.show(R.tipHTML({
+          title: cap(monthLong(d.date)),
+          value: fmt(d.v, 1),
+          unit: "milioni di clienti",
+          note: d.note || null
+        }), cx + m.left, cy + m.top);
+      }
+      clearActive = function () {
+        cross.style("opacity", 0);
+        pts.attr("r", function (p) { return p === last ? 5 : 4; }).classed("is-dimmed", false);
+      };
+      function nearest(ev) {
+        var mx = d3.pointer(ev, g.node())[0];
+        return d3.least(data, function (d) { return Math.abs(x(d.date) - mx); });
+      }
+      g.append("rect").attr("class", "hit")
+        .attr("x", -6).attr("y", -m.top).attr("width", w + 12).attr("height", h + m.top)
+        .on("pointermove pointerdown", function (ev) { activate(nearest(ev)); })
+        .on("pointerleave", function (ev) { if (ev.pointerType === "mouse") { tip.hide(); clearActive(); } });
+    });
+  }).catch(function (e) { R.fail("#chart", e); });
+})();
+</script>
+</body>
+</html>

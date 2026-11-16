@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timeline Revolut – Radar QN</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/radar.css">
+<!-- SEGNAPOSTO: sostituire questo file con timeline-revolut.html, copiato così com'è -->
+</head>
+<body>
+<main class="radar">
+  <h1 class="r-title">Revolut in Italia, le tappe</h1>
+  <p class="r-sub">Timeline in preparazione</p>
+  <footer class="r-foot"><span>Fonte: Revolut</span><span>Elaborazione Radar – QN</span></footer>
+</main>
+<script>
+function h(){parent.postMessage({sentinel:'radar-qn',type:'height',height:document.querySelector('.radar').getBoundingClientRect().height},'*')}
+addEventListener('load',h);addEventListener('resize',h);
+</script>
+</body>
+</html>

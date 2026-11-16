@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Revolut Italia – Dataviz Radar QN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/radar.css">
+<style>
+  .idx { max-width: 1040px; }
+  .idx-intro { font-size: 15px; line-height: 1.5; color: var(--ink-2); max-width: 640px; margin: 8px 0 0; }
+  .item { border-top: 1px solid var(--rule); margin-top: 40px; padding-top: 20px; }
+  .item h2 { font-size: 18px; margin: 0 0 4px; }
+  .item .meta { font-size: 13px; color: var(--ink-2); margin: 0 0 16px; }
+  .item .meta a { color: var(--blue); }
+  .grid2 { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; }
+  @media (max-width: 900px) { .grid2 { grid-template-columns: minmax(0, 1fr); } .phone { display: none; } }
+  .frame-wrap { border: 1px dashed var(--rule); }
+  .frame-wrap iframe { display: block; width: 100%; border: 0; }
+  .phone .frame-wrap { width: 360px; }
+  .cap { font-size: 12px; color: var(--ink-2); margin: 0 0 6px; }
+  .snip { position: relative; margin-top: 16px; }
+  .snip pre {
+    margin: 0; padding: 12px 14px; background: #f6f6f6; border-radius: 2px;
+    font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    white-space: pre-wrap; word-break: break-all; color: var(--ink);
+  }
+  .snip button {
+    position: absolute; top: 8px; right: 8px; font: 600 12px Inter, sans-serif;
+    background: var(--blue); color: #fff; border: 0; border-radius: 2px; padding: 6px 10px; cursor: pointer;
+  }
+  .snip button.ok { background: var(--ink); }
+  .resizer { margin-top: 40px; }
+</style>
+</head>
+<body>
+<main class="radar idx">
+  <h1 class="r-title">Revolut Italia: le dataviz di Radar</h1>
+  <p class="idx-intro">Anteprima delle dataviz interattive per l'articolo di Radar – Quotidiano Nazionale su Revolut Italia. Per ogni grafico c'è lo snippet da incollare nel CMS. Lo script che adatta l'altezza degli iframe basta inserirlo una sola volta per pagina, ma è incluso in ogni snippet ed è sicuro anche se ripetuto.</p>
+  <div id="list"></div>
+
+  <footer class="r-foot">
+    <span>Dati in <a href="https://github.com/lorenzobuonarosa/revolut/tree/main/data" style="color:inherit">/data</a> · CSV con separatore ; e virgola decimale</span>
+    <span>Elaborazione Radar – QN</span>
+  </footer>
+</main>
+
+<script>
+(function () {
+  var BASE = "https://lorenzobuonarosa.github.io/revolut/";
+  var ITEMS = [
+    { slug: "clienti", title: "Clienti di Revolut in Italia", h: 620, src: "Revolut, Teleborsa, Milano Finanza, AFP" },
+    { slug: "conti", title: "I conti di Revolut Bank", h: 600, src: "Revolut Bank UAB, report finanziari" },
+    { slug: "segnalazioni", title: "Segnalazioni di operazioni sospette alla UIF", h: 840, src: "UIF, Rapporto annuale 2025 e Quaderno dell'antiriciclaggio, I semestre 2026" },
+    { slug: "reclami", title: "I reclami ricevuti da Revolut Italia", h: 820, src: "Revolut, Rendiconto sulla gestione dei reclami 2025" },
+    { slug: "timeline", title: "Timeline di Revolut in Italia", h: 520, src: "Revolut" }
+  ];
+  var RESIZER = '<script>\n(function(){if(window.__radarQN)return;window.__radarQN=1;window.addEventListener("message",function(e){if(e.origin!=="https://lorenzobuonarosa.github.io")return;var d=e.data;if(!d||d.sentinel!=="radar-qn"||d.type!=="height")return;var f=document.getElementsByTagName("iframe");for(var i=0;i<f.length;i++){if(f[i].contentWindow===e.source){f[i].style.height=Math.ceil(d.height)+"px";}}});})();\n<\/script>';
+
+  function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function snippet(it) {
+    return '<iframe src="' + BASE + it.slug + '/" width="100%" height="' + it.h + '" frameborder="0" scrolling="no" title="' + it.title + '"></iframe>\n' + RESIZER;
+  }
+
+  var list = document.getElementById("list");
+  ITEMS.forEach(function (it) {
+    var sec = document.createElement("section");
+    sec.className = "item";
+    sec.innerHTML =
+      '<h2>' + it.title + '</h2>' +
+      '<p class="meta"><a href="' + it.slug + '/">' + BASE + it.slug + '/</a> · Fonte: ' + it.src + '</p>' +
+      '<div class="grid2">' +
+        '<div><p class="cap">Desktop</p><div class="frame-wrap"><iframe src="' + it.slug + '/" height="' + it.h + '" scrolling="no" title="' + it.title + '" loading="lazy"></iframe></div></div>' +
+        '<div class="phone"><p class="cap">Mobile, 360 px</p><div class="frame-wrap"><iframe src="' + it.slug + '/" height="' + it.h + '" scrolling="no" title="' + it.title + ' (mobile)" loading="lazy"></iframe></div></div>' +
+      '</div>' +
+      '<div class="snip"><pre>' + esc(snippet(it)) + '</pre><button type="button">Copia</button></div>';
+    list.appendChild(sec);
+    var btn = sec.querySelector("button");
+    btn.addEventListener("click", function () {
+      var done = function () { btn.textContent = "Copiato"; btn.classList.add("ok"); setTimeout(function () { btn.textContent = "Copia"; btn.classList.remove("ok"); }, 1600); };
+      if (navigator.clipboard) navigator.clipboard.writeText(snippet(it)).then(done, function () {});
+    });
+  });
+
+  // ridimensionamento delle anteprime (stessa logica dello snippet, senza filtro sull'origine)
+  window.addEventListener("message", function (e) {
+    var d = e.data;
+    if (!d || d.sentinel !== "radar-qn" || d.type !== "height") return;
+    var f = document.getElementsByTagName("iframe");
+    for (var i = 0; i < f.length; i++) if (f[i].contentWindow === e.source) f[i].style.height = Math.ceil(d.height) + "px";
+  });
+})();
+</script>
+</body>
+</html>

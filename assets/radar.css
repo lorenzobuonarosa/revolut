@@ -1,0 +1,185 @@
+/* Radar – Quotidiano Nazionale · stile condiviso per le dataviz */
+:root {
+  --ink: #1a1a1a;
+  --ink-2: #6b6b6b;
+  --rule: #e3e3e3;
+  --blue: #1f4fd1;
+  --blue-light: #9fb3ec;
+  --red: #d1452f;
+  --grey: #8a8a8a;
+  --grey-dark: #4d4d4d;
+  --grey-light: #c9c9c9;
+  --bg: #ffffff;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
+}
+
+.radar {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+/* ---------- Testata ---------- */
+.r-title {
+  font-size: 22px;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 6px;
+  text-wrap: balance;
+}
+.r-sub {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink-2);
+  margin: 0;
+}
+
+/* ---------- Big number ---------- */
+.r-big {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin: 24px 0 4px;
+}
+.r-big__num {
+  font-size: 44px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.r-big__unit { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+.r-big__label {
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--ink-2);
+  max-width: 300px;
+}
+
+/* ---------- Area grafico ---------- */
+.r-chart { position: relative; margin: 28px 0 0; }
+.r-chart + .r-chart { margin-top: 36px; }
+.r-chart svg { display: block; overflow: visible; }
+.r-chart__head {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 2px;
+}
+.r-chart__sub {
+  font-size: 13px;
+  color: var(--ink-2);
+  margin: 0 0 10px;
+}
+
+.r-panels { display: flex; gap: 32px; margin-top: 28px; }
+.r-panels > .r-chart { flex: 1 1 0; min-width: 0; margin: 0; }
+@media (max-width: 559px) {
+  .r-panels { flex-direction: column; gap: 32px; }
+}
+
+/* testo SVG */
+.r-chart text { font-family: inherit; font-variant-numeric: tabular-nums; }
+.axis text, .tick-label { font-size: 12px; fill: var(--ink-2); }
+.axis .domain { display: none; }
+.axis .tick line { stroke: var(--rule); }
+.axis--x .tick line { stroke: var(--grey-light); }
+.grid line { stroke: var(--rule); stroke-width: 1; shape-rendering: crispEdges; }
+.baseline { stroke: var(--ink); stroke-width: 1; shape-rendering: crispEdges; }
+
+.val-label { font-size: 12px; font-weight: 600; fill: var(--ink); }
+.val-label--muted { font-weight: 500; fill: var(--ink-2); }
+.series-label { font-size: 13px; font-weight: 600; fill: var(--ink); }
+.series-label--sub { font-size: 12px; font-weight: 400; fill: var(--ink-2); }
+
+/* ---------- Annotazioni ---------- */
+.anno text { font-size: 13px; line-height: 1.35; fill: var(--ink); paint-order: stroke; stroke: #fff; stroke-width: 4px; stroke-linejoin: round; }
+.anno text .em { font-weight: 600; }
+.anno line, .anno path {
+  paint-order: normal; stroke: var(--ink); stroke-width: 0.75; fill: none; }
+.anno .dash { stroke: var(--ink-2); stroke-dasharray: 3 3; }
+.anno circle { fill: var(--ink); }
+
+/* ---------- Interazione ---------- */
+.mark { transition: opacity 180ms ease; }
+.is-dimmed { opacity: 0.28; }
+.hit { fill: transparent; cursor: pointer; }
+.crosshair { stroke: var(--ink); stroke-width: 1; shape-rendering: crispEdges; pointer-events: none; }
+
+.r-tip {
+  position: absolute;
+  top: 0; left: 0;
+  z-index: 5;
+  pointer-events: none;
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 8px 10px 9px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--ink);
+  min-width: 120px;
+  max-width: 230px;
+  opacity: 0;
+  transition: opacity 120ms ease;
+  font-variant-numeric: tabular-nums;
+}
+.r-tip.is-on { opacity: 1; }
+.r-tip__t { font-weight: 700; margin: 0 0 2px; }
+.r-tip__v { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2; }
+.r-tip__v small { font-size: 13px; font-weight: 500; color: var(--ink-2); letter-spacing: 0; }
+.r-tip__rows { margin-top: 6px; border-top: 1px solid var(--rule); padding-top: 5px; }
+.r-tip__row { display: flex; justify-content: space-between; gap: 12px; color: var(--ink-2); }
+.r-tip__row b { color: var(--ink); font-weight: 600; }
+.r-tip__note { margin-top: 6px; color: var(--ink-2); font-size: 12px; }
+
+/* ---------- Chiavi e note ---------- */
+.r-key {
+  display: flex; flex-wrap: wrap; gap: 6px 16px;
+  font-size: 12px; color: var(--ink-2);
+  margin: 10px 0 0;
+}
+.r-key span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.sw--ring { border-radius: 50%; border: 2px solid var(--blue); background: #fff; }
+.sw--hatch {
+  background: repeating-linear-gradient(135deg, var(--blue-light) 0 2px, #fff 2px 4px);
+  border: 1px solid var(--blue-light);
+}
+.r-note { font-size: 12px; line-height: 1.45; color: var(--ink-2); margin: 12px 0 0; }
+
+/* ---------- Piede ---------- */
+.r-foot {
+  margin-top: 28px;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 16px;
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mark, .r-tip { transition: none; }
+}
